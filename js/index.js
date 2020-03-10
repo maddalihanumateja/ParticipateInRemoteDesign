@@ -10,33 +10,21 @@ console.log(JSON.stringify(ZoomMtg.checkSystemRequirements()));
 ZoomMtg.preLoadWasm();
 ZoomMtg.prepareJssdk();
 
-
-const API_KEY = 'VqbU29WoSJ-qPOcABAYuOA';
-
-/**
-    * NEVER PUT YOUR ACTUAL API SECRET IN CLIENT SIDE CODE, THIS IS JUST FOR QUICK PROTOTYPING
-    * The below generateSignature should be done server side as not to expose your api secret in public
-    * You can find an eaxmple in here: https://marketplace.zoom.us/docs/sdk/native-sdks/Web-Client-SDK/tutorial/generate-signature
-    */
-const API_SECRET = 'JrRV3HT2FdhPo2qhmA3HnFBiXZtcQDvMvjgO';
-
 document.getElementById('join_meeting').addEventListener('click', (e) => {
     e.preventDefault();
 
     const meetConfig = {
-        apiKey: API_KEY,
-        apiSecret: API_SECRET,
         meetingNumber: parseInt(document.getElementById('meeting_number').value, 10),
         userName: document.getElementById('display_name').value,
-        passWord: parseInt(document.getElementById('meeting_password').value, 6),
+        passWord: document.getElementById('meeting_password').value,
         leaveUrl: 'https://zoom.us',
         role: 0
     };
 
     ZoomMtg.generateSignature({
         meetingNumber: meetConfig.meetingNumber,
-        apiKey: meetConfig.apiKey,
-        apiSecret: meetConfig.apiSecret,
+        apiKey: process.env.API_KEY,
+        apiSecret: process.env.API_SECRET,
         role: meetConfig.role,
         success(res) {
             console.log('signature', res.result);
@@ -48,7 +36,54 @@ document.getElementById('join_meeting').addEventListener('click', (e) => {
                             meetingNumber: meetConfig.meetingNumber,
                             userName: meetConfig.userName,
                             signature: res.result,
-                            apiKey: meetConfig.apiKey,
+                            apiKey: process.env.API_KEY,
+                            userEmail: 'email@gmail.com',
+                            passWord: meetConfig.passWord,
+                            success() {
+                                $('#nav-tool').hide();
+                                console.log('join meeting success');
+                            },
+                            error(res) {
+                                console.log(res);
+                            }
+                        }
+                    );
+                },
+                error(res) {
+                    console.log(res);
+                }
+            });
+        }
+    });
+});
+
+document.getElementById('start_meeting').addEventListener('click', (e) => {
+    e.preventDefault();
+
+    const meetConfig = {
+        meetingNumber: parseInt(document.getElementById('meeting_number').value, 10),
+        userName: document.getElementById('display_name').value,
+        passWord: document.getElementById('meeting_password').value,
+        leaveUrl: 'https://zoom.us',
+        role: 1
+    };
+
+    ZoomMtg.generateSignature({
+        meetingNumber: meetConfig.meetingNumber,
+        apiKey: process.env.API_KEY,
+        apiSecret: process.env.API_SECRET,
+        role: meetConfig.role,
+        success(res) {
+            console.log('signature', res.result);
+            ZoomMtg.init({
+                leaveUrl: 'http://www.zoom.us',
+                success() {
+                    ZoomMtg.join(
+                        {
+                            meetingNumber: meetConfig.meetingNumber,
+                            userName: meetConfig.userName,
+                            signature: res.result,
+                            apiKey: process.env.API_KEY,
                             userEmail: 'email@gmail.com',
                             passWord: meetConfig.passWord,
                             success() {

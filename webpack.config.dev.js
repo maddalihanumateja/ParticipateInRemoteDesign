@@ -1,5 +1,6 @@
 const path = require('path');
 const webpack = require('webpack');
+var dotenv = require('dotenv').config({path: __dirname + '/.env'});
 const args = process.argv.slice(2);
 const https = args[2] === '--https' && args[3] === 'true';
 
@@ -81,6 +82,8 @@ module.exports = {
         new webpack.DefinePlugin({
             'process.env.NODE_ENV': JSON.stringify('development'),
             'process.env.BABEL_ENV': JSON.stringify('development'),
+            "process.env.API_KEY": JSON.stringify(dotenv.parsed.API_KEY),
+            "process.env.API_SECRET": JSON.stringify(dotenv.parsed.API_SECRET)
         })
     ],
 };
