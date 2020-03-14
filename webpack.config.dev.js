@@ -8,7 +8,7 @@ module.exports = {
     devtool: 'eval',
     entry: {
         app: [
-            './js/index.js'
+            './src/js/index.js'
         ]
     },
     output: {
@@ -21,24 +21,24 @@ module.exports = {
     module: {
         rules: [
             {
-                test: /\.jsx?$/,
+                test: /.\/src\/js\/\.jsx?$/,
                 exclude: /node_modules/,
                 loader: 'babel-loader'
             },
             {
-                test: /\.css$/,
+                test: /.\/src\/css\/\.css$/,
                 loader: 'style-loader!css-loader'
             },
             {
-                test: /\.(jpg|png|svg)$/,
+                test: /.\/src\/img\/\.(jpg|png|svg)$/,
                 loader: 'url-loader?limit=500000'
             },
             {
-                test: /\.(ttf|eot|woff|woff2|svg)$/,
+                test: /.\/src\/fonts\/\.(ttf|eot|woff|woff2|svg)$/,
                 loader: 'url-loader?limit=50000'
             },
             {
-                test: /\.scss$/,
+                test: /.\/src\/css\/\.scss$/,
                 loader: 'style!css!sass'
             }
         ]
