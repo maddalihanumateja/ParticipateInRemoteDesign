@@ -1,4 +1,12 @@
 import { ZoomMtg } from '@zoomus/websdk';
+/*
+import {React} from 'react';
+import {ReactDom} from 'react-dom';
+import {Redux} from 'redux';
+import {ReduxThunk} from 'redux-thunk';
+import {_} from 'lodash';
+import {$} from 'jquery';
+*/
 
 console.log('checkSystemRequirements');
 console.log(JSON.stringify(ZoomMtg.checkSystemRequirements()));

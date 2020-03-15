@@ -1,6 +1,6 @@
 const path = require('path');
 const webpack = require('webpack');
-var dotenv = require('dotenv').config({path: __dirname + '/.env'});
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 const args = process.argv.slice(2);
 const https = args[2] === '--https' && args[3] === 'true';
 
@@ -10,8 +10,8 @@ module.exports = {
         index:'./src/js/index.js'
     },
     output: {
-        path: path.resolve(__dirname, '/static'),
-        publicPath: '/static',
+        path: path.resolve(__dirname, '/dist'),
+        publicPath: '/dist',
         hashDigestLength: 5,
         // filename: `zoom-meeting-${buildVersion}-[name]-[chunkhash].min.js`,
         filename: '[name].min.js'
@@ -60,28 +60,14 @@ module.exports = {
     context: __dirname,
     target: 'web',
     devServer: {
-        https,
-        cert: './localhost.crt',
-        key: './localhost.key',
-        host: '0.0.0.0',
-        port: 9999,
-        hot: true,
-        overlay: true,
-        historyApiFallback: false,
-        watchContentBase: true,
-        disableHostCheck: true,
-        headers: {
-            'Access-Control-Allow-Origin': https ? 'https://0.0.0.0:9999' : 'http://0.0.0.0:9999'
-        }
+        contentBase: './dist',
     },
     mode: 'development',
     plugins: [
         new webpack.HotModuleReplacementPlugin(),
         new webpack.DefinePlugin({
             'process.env.NODE_ENV': JSON.stringify('development'),
-            'process.env.BABEL_ENV': JSON.stringify('development'),
-            "process.env.API_KEY": JSON.stringify(dotenv.parsed.API_KEY),
-            "process.env.API_SECRET": JSON.stringify(dotenv.parsed.API_SECRET)
+            'process.env.BABEL_ENV': JSON.stringify('development')
         })
     ],
 };
