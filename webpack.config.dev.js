@@ -7,9 +7,7 @@ const https = args[2] === '--https' && args[3] === 'true';
 module.exports = {
     devtool: 'eval',
     entry: {
-        app: [
-            './src/js/index.js'
-        ]
+        index:'./src/js/index.js'
     },
     output: {
         path: path.resolve(__dirname, '/static'),
