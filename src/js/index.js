@@ -1,12 +1,4 @@
 import { ZoomMtg } from '@zoomus/websdk';
-/*
-import {React} from 'react';
-import {ReactDom} from 'react-dom';
-import {Redux} from 'redux';
-import {ReduxThunk} from 'redux-thunk';
-import {_} from 'lodash';
-import {$} from 'jquery';
-*/
 
 console.log('checkSystemRequirements');
 console.log(JSON.stringify(ZoomMtg.checkSystemRequirements()));
@@ -24,35 +16,39 @@ document.getElementById('join_meeting').addEventListener('click', (e) => {
     const meetConfig = {
         meetingNumber: parseInt(document.getElementById('meeting_number').value, 10),
         userName: document.getElementById('display_name').value,
+        userEmail: document.getElementById('display_email').value,
         passWord: document.getElementById('meeting_password').value,
         leaveUrl: 'https://zoom.us',
         role: 0
     };
 
-    ZoomMtg.generateSignature({
-        meetingNumber: meetConfig.meetingNumber,
-        apiKey: process.env.API_KEY,
-        apiSecret: process.env.API_SECRET,
-        role: meetConfig.role,
-        success(res) {
-            console.log('signature', res.result);
-            ZoomMtg.init({
+    fetch('/zoom_sign', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(meetConfig)
+    }).then((response) => {
+        return response.json();
+    })
+    .then((data) => {
+        ZoomMtg.init({
                 leaveUrl: 'http://www.zoom.us',
                 success() {
                     ZoomMtg.join(
                         {
                             meetingNumber: meetConfig.meetingNumber,
                             userName: meetConfig.userName,
-                            signature: res.result,
-                            apiKey: process.env.API_KEY,
-                            userEmail: 'email@gmail.com',
+                            signature: data.signature,
+                            apiKey: data.API_KEY,
+                            userEmail: meetConfig.userEmail,
                             passWord: meetConfig.passWord,
-                            success() {
+                            success: (success) => {
                                 $('#nav-tool').hide();
                                 console.log('join meeting success');
                             },
-                            error(res) {
-                                console.log(res);
+                            error: (error) => {
+                                console.log(error);
                             }
                         }
                     );
@@ -61,8 +57,7 @@ document.getElementById('join_meeting').addEventListener('click', (e) => {
                     console.log(res);
                 }
             });
-        }
-    });
+  });
 });
 
 document.getElementById('start_meeting').addEventListener('click', (e) => {
@@ -71,35 +66,39 @@ document.getElementById('start_meeting').addEventListener('click', (e) => {
     const meetConfig = {
         meetingNumber: parseInt(document.getElementById('meeting_number').value, 10),
         userName: document.getElementById('display_name').value,
+        userEmail: document.getElementById('display_email').value,
         passWord: document.getElementById('meeting_password').value,
         leaveUrl: 'https://zoom.us',
         role: 1
     };
 
-    ZoomMtg.generateSignature({
-        meetingNumber: meetConfig.meetingNumber,
-        apiKey: process.env.API_KEY,
-        apiSecret: process.env.API_SECRET,
-        role: meetConfig.role,
-        success(res) {
-            console.log('signature', res.result);
-            ZoomMtg.init({
+    fetch('/zoom_sign', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(meetConfig)
+    }).then((response) => {
+        return response.json();
+    })
+    .then((data) => {
+        ZoomMtg.init({
                 leaveUrl: 'http://www.zoom.us',
                 success() {
                     ZoomMtg.join(
                         {
                             meetingNumber: meetConfig.meetingNumber,
                             userName: meetConfig.userName,
-                            signature: res.result,
-                            apiKey: process.env.API_KEY,
-                            userEmail: 'email@gmail.com',
+                            signature: data.signature,
+                            apiKey: data.API_KEY,
+                            userEmail: meetConfig.userEmail,
                             passWord: meetConfig.passWord,
-                            success() {
+                            success: (success) => {
                                 $('#nav-tool').hide();
                                 console.log('join meeting success');
                             },
-                            error(res) {
-                                console.log(res);
+                            error: (error) => {
+                                console.log(error);
                             }
                         }
                     );
@@ -108,6 +107,5 @@ document.getElementById('start_meeting').addEventListener('click', (e) => {
                     console.log(res);
                 }
             });
-        }
-    });
+  });
 });
