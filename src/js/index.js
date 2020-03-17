@@ -65,7 +65,7 @@ document.getElementById('join_meeting').addEventListener('click', (e) => {
                             userEmail: meetConfig.userEmail,
                             passWord: meetConfig.passWord,
                             success: (success) => {
-                                $('#zmmtg-root').show();
+                                $('#zmmtg-root').show(200);
                                 console.log('join meeting success');
                             },
                             error: (error) => {
@@ -115,7 +115,7 @@ document.getElementById('start_meeting').addEventListener('click', (e) => {
                             userEmail: meetConfig.userEmail,
                             passWord: meetConfig.passWord,
                             success: (success) => {
-                                $('#zmmtg-root').show();
+                                $('#zmmtg-root').show(200);
                                 console.log('join meeting success');
                             },
                             error: (error) => {
