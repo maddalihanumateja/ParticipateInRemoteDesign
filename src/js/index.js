@@ -10,6 +10,27 @@ console.log(JSON.stringify(ZoomMtg.checkSystemRequirements()));
 ZoomMtg.preLoadWasm();
 ZoomMtg.prepareJssdk();
 
+//Hide the zoom meeting window
+$('#zmmtg-root').hide();
+$('#researcher_side_form').hide();
+
+
+//When you click on the participant side hide the researcher side and display the participant's options
+document.getElementById('participant_side').addEventListener('click', (e) => {
+    
+    $('#researcher_side').hide(400);
+    $('#participant_side_init_message').hide();
+
+});
+
+//When you click on the researcher side hide the participant side and display the participant's options
+document.getElementById('researcher_side').addEventListener('click', (e) => {
+
+    $('#participant_side').hide(400);
+    $('#researcher_side_init_message').hide();
+    $('#researcher_side_form').show(100);
+});
+
 document.getElementById('join_meeting').addEventListener('click', (e) => {
     e.preventDefault();
 
@@ -44,7 +65,7 @@ document.getElementById('join_meeting').addEventListener('click', (e) => {
                             userEmail: meetConfig.userEmail,
                             passWord: meetConfig.passWord,
                             success: (success) => {
-                                $('#nav-tool').hide();
+                                $('#zmmtg-root').show();
                                 console.log('join meeting success');
                             },
                             error: (error) => {
@@ -94,7 +115,7 @@ document.getElementById('start_meeting').addEventListener('click', (e) => {
                             userEmail: meetConfig.userEmail,
                             passWord: meetConfig.passWord,
                             success: (success) => {
-                                $('#nav-tool').hide();
+                                $('#zmmtg-root').show();
                                 console.log('join meeting success');
                             },
                             error: (error) => {

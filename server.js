@@ -39,7 +39,7 @@ app.set('view engine', 'ejs');
 /* GET home page. */
 
 app.get('/', function(req, res, next) {
-	res.render('index.ejs');
+	res.render('new_index.ejs');
 });
 
 /* POST request with meeting details and response with zoom signature */
