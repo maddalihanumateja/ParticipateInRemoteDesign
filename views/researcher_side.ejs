@@ -1,11 +1,13 @@
 <div class="col-md-6 mr-auto" id="researcher_side" style="background-color: rgba(0,0,255,0.1);">
 		<div class="side_init_text text-center" id="researcher_side_init_text">
-			<div class="h1">Researcher
+			<div class="h1">I'm a Researcher/Primary Designer
 			</div>
 			<div class="small" id="researcher_side_init_message">Click here if you conducting a design session</div>
 		</div>
+
 		<div class="col-md-12" id="researcher_side_form">
-		<h2>Enter the Meeting Details</h2>
+		<div class="row">
+		<h2>Enter the meeting details</h2>
 			<form class="form-horizontal" id="researcher_meeting_form">
                 <div class="form-group">
                     <input type="text" name="display_name" id="display_name" value="" placeholder="User Name" class="form-control" required>
@@ -15,7 +17,10 @@
                     <input type="text" name="meeting_number" id="meeting_number" value="" placeholder="Meeting Number" class="form-control" required>
                     <input type="text" name="meeting_password" id="meeting_password" value="" placeholder="Meeting Password" class="form-control" required>
                 </div>
-                <button type="submit" class="btn btn-primary" id="start_meeting">Start</button>
+                <button type="submit" class="btn btn-primary" id="start_meeting">Start Meeting (as primary host)</button>
+                <button type="submit" class="btn btn-primary" id="join_meeting">Join Ongoing Meeting (as audience)</button>
             </form>
+        </div>
+        
 		</div>
 </div>

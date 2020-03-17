@@ -19,25 +19,25 @@ module.exports = {
     module: {
         rules: [
             {
-                test: /.\/src\/js\/\.jsx?$/,
+                test: /\.jsx?$/,
                 exclude: /node_modules/,
                 loader: 'babel-loader'
             },
             {
-                test: /.\/src\/css\/\.css$/,
+                test: /\.css$/,
                 loader: 'style-loader!css-loader'
             },
             {
-                test: /.\/src\/img\/\.(jpg|png|svg)$/,
+                test: /\.(jpg|png|svg)$/,
                 loader: 'url-loader?limit=500000'
             },
             {
-                test: /.\/src\/fonts\/\.(ttf|eot|woff|woff2|svg)$/,
+                test: /\.(ttf|eot|woff|woff2|svg)$/,
                 loader: 'url-loader?limit=50000'
             },
             {
-                test: /.\/src\/css\/\.scss$/,
-                loader: 'style!css!sass'
+                test: /\.scss$/,
+                loader: 'style-loader!css-loader!sass-loader'
             }
         ]
     },
