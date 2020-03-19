@@ -9,6 +9,9 @@ const crypto = require('crypto');
 const cors = require('cors')
 const config = require('./webpack.config.dev.js');
 
+//load database functions
+const db = require('./queries')
+
 var dotenv = require('dotenv').config({path: __dirname + '/.env'});
 //#endregion
 
@@ -56,6 +59,16 @@ app.post('/zoom_sign', (req, res) => {
   });
   console.log("Sent response");
 })
+
+//#region all DB endpoints
+app.get('/meeting_logs', db.getAllMeetingLogs)
+app.get('/meeting_active_logs', db.getActiveMeetingLogs)
+app.get('/meeting_log/:user_name/:meeting_number', db.getMeetingLog)
+app.post('/meeting_log', db.createMeetingLog)
+app.put('/meeting_log/:user_name/:meeting_number', db.updateMeetingLogEnded)
+app.delete('/meeting_log/:meeting_number', db.deleteMeetingLog)
+
+//#endregion
 
 //#endregion
 
