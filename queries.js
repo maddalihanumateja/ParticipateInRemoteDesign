@@ -10,7 +10,7 @@ const pool = new Pool({
 })
 
 const getAllMeetingLogs = (request, response) => {
-  pool.query('SELECT * FROM meeting_logs WHERE meeting_host=true ORDER BY id ASC', (error, results) => {
+  pool.query('SELECT * FROM meeting_logs WHERE meeting_host=true ORDER BY meeting_id ASC', (error, results) => {
     if (error) {
       throw error
     }
@@ -19,7 +19,7 @@ const getAllMeetingLogs = (request, response) => {
 }
 
 const getActiveMeetingLogs = (request, response) => {
-  pool.query('SELECT * FROM meeting_logs WHERE meeting_ended=false AND meeting_host=true ORDER BY id ASC', (error, results) => {
+  pool.query('SELECT * FROM meeting_logs WHERE meeting_ended=false AND meeting_host=true ORDER BY meeting_id ASC', (error, results) => {
     if (error) {
       throw error
     }
@@ -40,13 +40,20 @@ const getMeetingLog = (request, response) => {
 }
 
 const createMeetingLog = (request, response) => {
-  const {meeting_number, meeting_password, user_name, email, ip_address, user_type, meeting_host} = request.body
+  const meeting_number = request.body.meeting_number;
+  const meeting_password = request.body.meeting_password;
+  const user_name = request.body.user_name;
+  const email = request.body.email;
+  const ip_address = request.body.ip_address;
+  const user_type = request.body.user_type;
+  const meeting_host = request.body.meeting_host;
 
   pool.query('INSERT INTO meeting_logs (meeting_number, meeting_password, user_name, email, ip_address, meeting_join_time, meeting_leave_time, user_type, meeting_host, meeting_ended) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);', [meeting_number, meeting_password, user_name, email, ip_address, new Date(), null, user_type, meeting_host, false], (error, results) => {
     if (error) {
+      console.log(request);
       throw error
     }
-    response.status(201).send(`User added with ID: ${result.insertId}`)
+    response.status(201).send(`Meeting Log added with ID: ${results.insertId}`)
   })
 }
 
@@ -55,13 +62,13 @@ const updateMeetingLogEnded = (request, response) => {
   const meeting_number = parseInt(request.params.meeting_number)
 
   pool.query(
-    'UPDATE users SET meeting_ended = true WHERE user_name = $1 AND meeting_number = $2;',
+    'UPDATE users SET meeting_ended = true WHERE user_name = $1 AND meeting_number = $2 AND meeting_host = true;',
     [user_name, meeting_number],
     (error, results) => {
       if (error) {
         throw error
       }
-      response.status(200).send(`User modified with ID: ${id}`)
+      response.status(200).send(`Set meeting_ended=true for Meeting Log with ID: ${id}`)
     }
   )
 }

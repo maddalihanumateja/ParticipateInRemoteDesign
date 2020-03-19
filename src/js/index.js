@@ -15,12 +15,32 @@ ZoomMtg.prepareJssdk();
 $('#zmmtg-root').hide();
 $('#researcher_side_form').hide();
 
+var ip_address="0.0.0.0";
+$.get('https://api.ipify.org?format=json', function(data, status) {
+    ip_address = data.ip;
+});
+
 
 //When you click on the participant side hide the researcher side and display the participant's options
 document.getElementById('participant_side').addEventListener('click', (e) => {
     
     $('#researcher_side').hide(400);
     $('#participant_side_init_message').hide();
+    //Change to log only active meetings
+    $.get("/meeting_active_logs", function(data, status){
+        if(data.length==0){
+            $('#participant_side_meetings').html('<h3>No Active Meetings Found</h3>');
+        }
+        else{
+            var test = $('<button/>',
+            {
+                text: 'Click here to join meeting 1',
+                class: "btn btn-primary",
+                click: function () { console.log(data[0]); }
+            });
+            $('#participant_side_meetings').html('<h4>'+data.length+' Active Meetings Found</h4>').append(test);
+        }
+    });
 
     // Note: Get meetConfig from the server. Search for available (running) meetings in a meetings table. 
     // The meetings list should be updated whenever the researcher starts a meeting.
@@ -39,7 +59,16 @@ document.getElementById('researcher_side').addEventListener('click', (e) => {
     $('#researcher_side_init_message').hide();
     $('#researcher_side_form').show(100);
 
-    // Note: Get meetConfig from the server. Search for available (running) meetings in a meetings table. 
+    $.get("/meeting_active_logs", function(data, status){
+        if(data.length==0){
+            $('#researcher_side_meetings').html('<h3>No Active Meetings Found</h3>');
+        }
+        else{
+            $('#researcher_side_meetings').html('<h4>'+data.length+' Active Meetings Found</h4>');
+        }
+    });
+
+    // Note: Get meetConfig from the server. Search for available (running) meetings in a meetings table. This is for when another researcher would like to join an existing meeting. 
     // The meetings list should be updated whenever the researcher starts a meeting.
     // Display how many meetings are currently available for the participant. 
     // Ask for the participant's name (Or, for example, let them choose from a list of avatars/nicknames if they can't write their name for some reason).
@@ -47,7 +76,7 @@ document.getElementById('researcher_side').addEventListener('click', (e) => {
 
 });
 
-document.getElementById('join_meeting').addEventListener('click', (e) => {
+document.getElementById('researcher_join_meeting').addEventListener('click', (e) => {
     e.preventDefault();
 
     const meetConfig = {
@@ -82,6 +111,22 @@ document.getElementById('join_meeting').addEventListener('click', (e) => {
                             passWord: meetConfig.passWord,
                             success: (success) => {
                                 $('#zmmtg-root').show(200);
+                                console.log('Creating a meeting log');
+                                fetch('/meeting_log', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({meeting_number: meetConfig.meetingNumber, 
+                                        meeting_password: meetConfig.passWord, 
+                                        user_name: meetConfig.userName, 
+                                        email: meetConfig.userEmail, 
+                                        ip_address: ip_address, 
+                                        user_type: 'researcher', 
+                                        meeting_host: false})
+                                    }).then((response) => {
+                                    return response.json();
+                                }).then((data) => {console.log(data)});
                                 console.log('join meeting success');
                             },
                             error: (error) => {
@@ -133,6 +178,22 @@ document.getElementById('start_meeting').addEventListener('click', (e) => {
                             passWord: meetConfig.passWord,
                             success: (success) => {
                                 $('#zmmtg-root').show(200);
+                                console.log('Creating a meeting log');
+                                fetch('/meeting_log', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({meeting_number: meetConfig.meetingNumber, 
+                                        meeting_password: meetConfig.passWord, 
+                                        user_name: meetConfig.userName, 
+                                        email: meetConfig.userEmail, 
+                                        ip_address: ip_address, 
+                                        user_type: 'researcher', 
+                                        meeting_host: true})
+                                    }).then((response) => {
+                                    return response.json();
+                                }).then((data) => {console.log(data)});
                                 console.log('join meeting success');
                             },
                             error: (error) => {
