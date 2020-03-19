@@ -19,7 +19,7 @@ const getAllMeetingLogs = (request, response) => {
 }
 
 const getActiveMeetingLogs = (request, response) => {
-  pool.query('SELECT * FROM meeting_logs WHERE meeting_ended=false AND meeting_host=true ORDER BY meeting_id ASC', (error, results) => {
+  pool.query("SELECT * FROM meeting_logs WHERE meeting_ended=false AND meeting_host=true AND user_type='researcher' ORDER BY meeting_id ASC", (error, results) => {
     if (error) {
       throw error
     }

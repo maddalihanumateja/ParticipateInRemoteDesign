@@ -34,9 +34,21 @@ document.getElementById('participant_side').addEventListener('click', (e) => {
         else{
             var test = $('<button/>',
             {
-                text: 'Click here to join meeting 1',
+                text: 'Click here to join meeting 2',
                 class: "btn btn-primary",
-                click: function () { console.log(data[0]); }
+                click: (e) => {
+                e.preventDefault();
+                initialize_button_click({
+                meetingNumber: data[1].meeting_number,
+                userName: "Participant",
+                userEmail: "",
+                passWord: data[1].meeting_password,
+                user_type: 'participant',
+                leaveUrl: 'https://zoom.us',
+                ip_address: ip_address,
+                role: 0
+                });   
+                }
             });
             $('#participant_side_meetings').html('<h4>'+data.length+' Active Meetings Found</h4>').append(test);
         }
@@ -78,81 +90,33 @@ document.getElementById('researcher_side').addEventListener('click', (e) => {
 
 document.getElementById('researcher_join_meeting').addEventListener('click', (e) => {
     e.preventDefault();
-
-    const meetConfig = {
+    initialize_button_click({
         meetingNumber: parseInt(document.getElementById('meeting_number').value, 10),
         userName: document.getElementById('display_name').value,
         userEmail: document.getElementById('display_email').value,
         passWord: document.getElementById('meeting_password').value,
+        user_type: 'researcher',
         leaveUrl: 'https://zoom.us',
+        ip_address: ip_address,
         role: 0
-    };
-
-    fetch('/zoom_sign', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(meetConfig)
-    }).then((response) => {
-        return response.json();
-    })
-    .then((data) => {
-        ZoomMtg.init({
-                leaveUrl: 'http://www.zoom.us',
-                success() {
-                    ZoomMtg.join(
-                        {
-                            meetingNumber: meetConfig.meetingNumber,
-                            userName: meetConfig.userName,
-                            signature: data.signature,
-                            apiKey: data.API_KEY,
-                            userEmail: meetConfig.userEmail,
-                            passWord: meetConfig.passWord,
-                            success: (success) => {
-                                $('#zmmtg-root').show(200);
-                                console.log('Creating a meeting log');
-                                fetch('/meeting_log', {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json'
-                                    },
-                                    body: JSON.stringify({meeting_number: meetConfig.meetingNumber, 
-                                        meeting_password: meetConfig.passWord, 
-                                        user_name: meetConfig.userName, 
-                                        email: meetConfig.userEmail, 
-                                        ip_address: ip_address, 
-                                        user_type: 'researcher', 
-                                        meeting_host: false})
-                                    }).then((response) => {
-                                    return response.json();
-                                }).then((data) => {console.log(data)});
-                                console.log('join meeting success');
-                            },
-                            error: (error) => {
-                                console.log(error);
-                            }
-                        }
-                    );
-                },
-                error(res) {
-                    console.log(res);
-                }
-            });
-  });
+    });   
 });
 
 document.getElementById('start_meeting').addEventListener('click', (e) => {
     e.preventDefault();
-
-    const meetConfig = {
+    initialize_button_click({
         meetingNumber: parseInt(document.getElementById('meeting_number').value, 10),
         userName: document.getElementById('display_name').value,
         userEmail: document.getElementById('display_email').value,
         passWord: document.getElementById('meeting_password').value,
+        user_type: 'researcher',
         leaveUrl: 'https://zoom.us',
+        ip_address: ip_address,
         role: 1
-    };
+    });   
+});
+
+var initialize_button_click = (meetConfig) => {
 
     fetch('/zoom_sign', {
         method: 'POST',
@@ -188,9 +152,9 @@ document.getElementById('start_meeting').addEventListener('click', (e) => {
                                         meeting_password: meetConfig.passWord, 
                                         user_name: meetConfig.userName, 
                                         email: meetConfig.userEmail, 
-                                        ip_address: ip_address, 
-                                        user_type: 'researcher', 
-                                        meeting_host: true})
+                                        ip_address: meetConfig.ip_address, 
+                                        user_type: meetConfig.user_type, 
+                                        meeting_host: meetConfig.role = 1 ? true:false})
                                     }).then((response) => {
                                     return response.json();
                                 }).then((data) => {console.log(data)});
@@ -207,4 +171,4 @@ document.getElementById('start_meeting').addEventListener('click', (e) => {
                 }
             });
   });
-});
+};
