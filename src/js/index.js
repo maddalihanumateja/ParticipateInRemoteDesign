@@ -14,6 +14,7 @@ ZoomMtg.prepareJssdk();
 //Hide the zoom meeting window
 $('#zmmtg-root').hide();
 $('#researcher_side_form').hide();
+$('#participant_side_form').hide();
 
 var ip_address="0.0.0.0";
 $.get('https://api.ipify.org?format=json', function(data, status) {
@@ -30,27 +31,34 @@ document.getElementById('participant_side').addEventListener('click', (e) => {
     $.get("/meeting_active_logs", function(data, status){
         if(data.length==0){
             $('#participant_side_meetings').html('<h3>No Active Meetings Found</h3>');
+            $('#participant_side_form').hide();
         }
         else{
-            var test = $('<button/>',
-            {
-                text: 'Click here to join meeting 2',
-                class: "btn btn-primary",
-                click: (e) => {
-                e.preventDefault();
-                initialize_button_click({
-                meetingNumber: data[1].meeting_number,
-                userName: "Participant",
-                userEmail: "",
-                passWord: data[1].meeting_password,
-                user_type: 'participant',
-                leaveUrl: 'https://zoom.us',
-                ip_address: ip_address,
-                role: 0
-                });   
-                }
-            });
-            $('#participant_side_meetings').html('<h4>'+data.length+' Active Meetings Found</h4>').append(test);
+            $('#participant_side_meetings').html('<h4>'+data.length+' Active Meetings Found</h4>');
+            $('#participant_side_form').show();
+            $('#participant_meeting_buttons').html("");
+            for(var i=0;i<data.length;i++){
+                var button = document.createElement("button");
+                button.innerHTML = 'Click here to join meeting '+i;
+                button.classList.add('btn','btn-primary');
+                $('#participant_meeting_buttons').append(button);
+                var meetConfig_i = {
+                        meetingNumber: data[i].meeting_number,
+                        userName: document.getElementById('participant_display_name').value,
+                        userEmail: "",
+                        passWord: data[i].meeting_password,
+                        user_type: 'participant',
+                        leaveUrl: 'https://zoom.us',
+                        ip_address: ip_address,
+                        role: 0
+                    };
+                // 3. Add event handler
+                button.addEventListener ("click", function(e) {
+                    e.preventDefault();
+                        initialize_button_click(meetConfig_i);
+                });
+            }
+            
         }
     });
 
@@ -76,7 +84,29 @@ document.getElementById('researcher_side').addEventListener('click', (e) => {
             $('#researcher_side_meetings').html('<h3>No Active Meetings Found</h3>');
         }
         else{
-            $('#researcher_side_meetings').html('<h4>'+data.length+' Active Meetings Found</h4>');
+            $('#researcher_side_meetings').html('<h4>'+data.length+' Active Meetings Found.<br>You can join these as an audience member.</h4>');
+            $('#researcher_meeting_buttons').html("");
+            for(var i=0;i<data.length;i++){
+                var button = document.createElement("button");
+                button.innerHTML = 'Click here to join meeting '+i;
+                button.classList.add('btn','btn-primary');
+                $('#researcher_meeting_buttons').append(button);
+                var meetConfig_i = {
+                        meetingNumber: data[i].meeting_number,
+                        userName: document.getElementById('display_name').value,
+                        userEmail: document.getElementById('display_email').value,
+                        passWord: data[i].meeting_password,
+                        user_type: 'researcher',
+                        leaveUrl: 'https://zoom.us',
+                        ip_address: ip_address,
+                        role: 0
+                    };
+                // 3. Add event handler
+                button.addEventListener ("click", function(e) {
+                    e.preventDefault();
+                        initialize_button_click(meetConfig_i);
+                });
+            }
         }
     });
 
@@ -86,20 +116,6 @@ document.getElementById('researcher_side').addEventListener('click', (e) => {
     // Ask for the participant's name (Or, for example, let them choose from a list of avatars/nicknames if they can't write their name for some reason).
     // Update user logs if starting the meeting is successful (meeting number, user-name (manually entered or chosen automatically), i.p. address, join meeting time, researcher?, leave meeting time)
 
-});
-
-document.getElementById('researcher_join_meeting').addEventListener('click', (e) => {
-    e.preventDefault();
-    initialize_button_click({
-        meetingNumber: parseInt(document.getElementById('meeting_number').value, 10),
-        userName: document.getElementById('display_name').value,
-        userEmail: document.getElementById('display_email').value,
-        passWord: document.getElementById('meeting_password').value,
-        user_type: 'researcher',
-        leaveUrl: 'https://zoom.us',
-        ip_address: ip_address,
-        role: 0
-    });   
 });
 
 document.getElementById('start_meeting').addEventListener('click', (e) => {
