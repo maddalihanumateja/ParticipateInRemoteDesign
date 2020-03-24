@@ -39,6 +39,18 @@ const getMeetingLog = (request, response) => {
   })
 }
 
+const getOtherUsersForMeeting = (request, response) => {
+  const user_name = request.params.user_name
+  const meeting_number = parseInt(request.params.meeting_number)
+
+  pool.query('SELECT UNIQUE(user_name) FROM meeting_logs WHERE meeting_number = $1 AND meeting_ended=false AND user_name!= $2 AND meeting_leave_time = NULL;', [meeting_number, user_name], (error, results) => {
+    if (error) {
+      throw error
+    }
+    response.status(200).json(results.rows)
+  })
+}
+
 const createMeetingLog = (request, response) => {
   const meeting_number = request.body.meeting_number;
   const meeting_password = request.body.meeting_password;
