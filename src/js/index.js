@@ -140,13 +140,17 @@ document.getElementById('start_meeting').addEventListener('click', (e) => {
     projector_button.onclick = function(){
         //send this to arandom username right now
         var obj = {'to_username': 'anon', 'message':'projector do something', 'room': parseInt(document.getElementById('meeting_number').value, 10)}
+        //console.log(obj);
+        researcher_trigger_event(obj);
     };
-    $('#zmmtg-root').appendTo('#main_view');
+    //$('#zmmtg-root').appendTo('#main_view');
     printer_button.innerHTML = 'Printer';
     printer_button.classList.add('btn','btn-primary');
     printer_button.onclick = function(){
         //send this to arandom username right now
         var obj = {'to_username': 'anon2', 'message':'printer do something', 'room': parseInt(document.getElementById('meeting_number').value, 10)}
+        //console.log(obj);
+        researcher_trigger_event(obj);
     }
     $('#custom_buttons').append(projector_button)
     $('#custom_buttons').append(printer_button)
@@ -227,8 +231,12 @@ socket.on('room_leave_event', function(obj){
       console.log(obj['message']);
     });
 
+socket.on('recieved_private_message', function(msg){
+      console.log(msg);
+    });
+
 
 var researcher_trigger_event = function(obj){
-      socket.emit('send_private_message', {'to_username':obj['to_username'], 'message':obj['message'], 'room': obj['meeting_number']});
+      socket.emit('send_private_message', {'to_username':obj['to_username'], 'message':obj['message'], 'room': obj['room']});
       return false;
 }

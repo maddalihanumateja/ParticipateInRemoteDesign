@@ -96,7 +96,7 @@ app.delete('/meeting_log/:meeting_number', db.deleteMeetingLog)
           for(socket_id in users_in_room[room]){
             if(socket_id == socket['id']){
               delete users_in_room[room][socket_id]
-              io.to(room).emit('room_leave_event',{'message':'left room '+room, 'users_in_room':users_in_room[room].keys(), 'room':room});
+              io.to(room).emit('room_leave_event',{'message':'left room '+room, 'users_in_room':Object.values(users_in_room[room]), 'room':room});
               break
             }
           }
@@ -115,15 +115,15 @@ app.delete('/meeting_log/:meeting_number', db.deleteMeetingLog)
           users_in_room[obj['room']] = {}
         }
         users_in_room[obj['room']][socket['id']] = obj['username']
-        io.to(obj['room']).emit('room_join_event',{'message':'joined room '+obj['room'], 'users_in_room':users_in_room[obj['room']].keys(), 'room':obj["room"]});
+        io.to(obj['room']).emit('room_join_event',{'message':'joined room '+obj['room'], 'users_in_room':Object.values(users_in_room[obj['room']]), 'room':obj["room"]});
       });
 
       socket.on('send_private_message',function(obj){
-        if(obj['to_username'] in users_in_room[obj['room']].values()){
+        if(Object.values(users_in_room[obj['room']]).indexOf(obj['to_username'])>=0){
           for(var user_socket in users_in_room[obj['room']]){
             if(users_in_room[obj['room']][user_socket] == obj['to_username']){
-              console.log('Message "'+obj['message']+'" sent to socket_id:'+users_in_room[obj['room']][user_socket]);
-              io.to(users_in_room[obj['room']][user_socket]).emit('recieved_private_message',obj['message']);  
+              console.log('Message "'+obj['message']+'" sent to user:'+users_in_room[obj['room']][user_socket]);
+              io.to(user_socket).emit('recieved_private_message',obj['message']);  
             }
           }
         }
