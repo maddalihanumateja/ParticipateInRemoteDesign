@@ -214,6 +214,9 @@ var initialize_button_click = (meetConfig) => {
                     console.log(res);
                 }
             });
+        ZoomMtg.showInviteFunction({
+            show: false
+        });
   });
 };
 
