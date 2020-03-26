@@ -1,3 +1,6 @@
+# About the Project #
+The objective of this project is to create an enhanced video conferencing environment for remote participatory design. The video conferencing environment should be able to interface with different devices in the user's vicinity (e.g. printers, projectors). 
+
 # Installation Instructions #
 - Installed node js latest version from [nodejs.org](https://nodejs.org/en/download/)
 - Install postgres SQL from [postgresql.org](https://www.postgresql.org/download/). Make sure you can connect to the postgres server by using the psql command in terminal. If not, make sure the path to the postgres binaries is in your system PATH environment variable.
