@@ -3,7 +3,7 @@ The objective of this project is to create an enhanced video conferencing enviro
 
 # Installation Instructions #
 - Installed node js latest version from [nodejs.org](https://nodejs.org/en/download/)
-- Install postgres SQL from [postgresql.org](https://www.postgresql.org/download/). Make sure you can connect to the postgres server by using the psql command in terminal. If not, make sure the path to the postgres binaries is in your system PATH environment variable.
+- Install postgres SQL from [postgresql.org](https://www.postgresql.org/download/). Make sure you can connect to the postgres server by using the `psql` command in terminal. If not, make sure the path to the postgres binaries is in your system PATH environment variable.
 - For creating video calls, we use a Zoom account along with the Zoom WebSDK. Create an account with [Zoom](https://zoom.us/). In the Zoom marketplace follow [these instructions](https://marketplace.zoom.us/docs/guides/getting-started/app-types/create-jwt-app) to create a JWT type app. Copy the API secret and key.
 - Clone this repository on your local machine. Inside the ParticipateInRemoteDesign folder create a file named '.env'. I've created an example file named '.env.example' as a template for this. Fill in the API_KEY and API_SECRET values from your Zoom account.
 - Create a separate user and database for the app on psql. In the database, run the ParticipateInRemoteDesign/models/initialize_db.sql file. It will create a table called meeting_logs and insert some example records in the table. Copy the psql user name, db name, password, and port. Fill these values into you '.env' file. HOST is just localhost since you're hosting the database on your local machine.
