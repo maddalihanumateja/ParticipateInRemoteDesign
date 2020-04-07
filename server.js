@@ -57,7 +57,9 @@ app.get('/', function(req, res, next) {
 /* POST request with meeting details and response with zoom signature */
 app.post('/zoom_sign', (req, res) => {
   
-  const timestamp = new Date().getTime();
+  //zoom websdk signature example was updated 5 days back
+  //https://github.com/zoom/websdk-sample-signature-node.js/commit/7908e9da02cea12a969c792686565f746882f462
+  const timestamp = new Date().getTime()-30000;
   const msg = Buffer.from(dotenv.parsed.API_KEY + req.body.meetingNumber + timestamp + req.body.role).toString('base64');
   const hash = crypto.createHmac('sha256', dotenv.parsed.API_SECRET).update(msg).digest('base64');
   const signature = Buffer.from(`${dotenv.parsed.API_KEY}.${req.body.meetingNumber}.${timestamp}.${req.body.role}.${hash}`).toString('base64');
