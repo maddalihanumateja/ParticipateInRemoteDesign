@@ -1,12 +1,13 @@
 import { ZoomMtg } from '@zoomus/websdk';
 import css from '../css/style.scss';
+import io from 'socket.io-client';
 
 console.log('checkSystemRequirements');
 console.log(JSON.stringify(ZoomMtg.checkSystemRequirements()));
 
 // it's option if you want to change the WebSDK dependency link resources. setZoomJSLib must be run at first
-//ZoomMtg.setZoomJSLib('https://source.zoom.us/1.7.2/lib', '/av'); // CDN version default
-// else ZoomMtg.setZoomJSLib('https://jssdk.zoomus.cn/1.7.2/lib', '/av'); // china cdn option 
+//ZoomMtg.setZoomJSLib('https://source.zoom.us/1.7.4/lib', '/av'); // CDN version default
+// else ZoomMtg.setZoomJSLib('https://jssdk.zoomus.cn/1.7.4/lib', '/av'); // china cdn option 
 // ZoomMtg.setZoomJSLib('http://localhost:9999/node_modules/@zoomus/websdk/dist/lib', '/av'); // Local version default, Angular Project change to use cdn version
 ZoomMtg.preLoadWasm();
 ZoomMtg.prepareJssdk();
@@ -21,6 +22,8 @@ $.get('https://api.ipify.org?format=json', function(data, status) {
     ip_address = data.ip;
 });
 
+var users_in_room =[];
+var socket = io();
 
 //When you click on the participant side hide the researcher side and display the participant's options
 document.getElementById('participant_side').addEventListener('click', (e) => {
@@ -129,7 +132,28 @@ document.getElementById('start_meeting').addEventListener('click', (e) => {
         leaveUrl: 'https://zoom.us',
         ip_address: ip_address,
         role: 1
-    });   
+    });
+    var projector_button = document.createElement("button");
+    var printer_button = document.createElement("button");
+    projector_button.innerHTML = 'Projector';
+    projector_button.classList.add('btn','btn-primary');
+    projector_button.onclick = function(){
+        //send this to arandom username right now
+        var obj = {'to_username': 'anon', 'message':'projector do something', 'room': parseInt(document.getElementById('meeting_number').value, 10)}
+        //console.log(obj);
+        researcher_trigger_event(obj);
+    };
+    //$('#zmmtg-root').appendTo('#main_view');
+    printer_button.innerHTML = 'Printer';
+    printer_button.classList.add('btn','btn-primary');
+    printer_button.onclick = function(){
+        //send this to arandom username right now
+        var obj = {'to_username': 'anon2', 'message':'printer do something', 'room': parseInt(document.getElementById('meeting_number').value, 10)}
+        //console.log(obj);
+        researcher_trigger_event(obj);
+    }
+    $('#custom_buttons').append(projector_button)
+    $('#custom_buttons').append(printer_button)
 });
 
 var initialize_button_click = (meetConfig) => {
@@ -174,10 +198,15 @@ var initialize_button_click = (meetConfig) => {
                                     }).then((response) => {
                                     return response.json();
                                 }).then((data) => {console.log(data)});
+
+                                //start a socket connection. send a set_room event to the server
+                                socket.emit('set_room', {'room':meetConfig.meetingNumber, 'username':meetConfig.userName});
+
                                 console.log('join meeting success');
                             },
                             error: (error) => {
                                 console.log(error);
+                                //If there is an error in starting the meeting then the projector and printer buttons should not be displayed for the researcher
                             }
                         }
                     );
@@ -186,5 +215,32 @@ var initialize_button_click = (meetConfig) => {
                     console.log(res);
                 }
             });
+        ZoomMtg.showInviteFunction({
+            show: false
+        });
   });
 };
+
+// Other socket.io session events
+
+socket.on('room_join_event', function(obj){
+      console.log(obj['users_in_room']);
+      users_in_room = obj['users_in_room'].slice();
+      console.log(obj['message']);
+    });
+
+socket.on('room_leave_event', function(obj){
+      console.log(obj['users_in_room']);
+      users_in_room = obj['users_in_room'].slice();
+      console.log(obj['message']);
+    });
+
+socket.on('recieved_private_message', function(msg){
+      console.log(msg);
+    });
+
+
+var researcher_trigger_event = function(obj){
+      socket.emit('send_private_message', {'to_username':obj['to_username'], 'message':obj['message'], 'room': obj['room']});
+      return false;
+}
