@@ -56,19 +56,28 @@ app.get('/', function(req, res, next) {
 
 /* POST request with meeting details and response with zoom signature */
 app.post('/zoom_sign', (req, res) => {
-  
+
+    console.log(req.body)
+
   //zoom websdk signature example was updated 5 days back
   //https://github.com/zoom/websdk-sample-signature-node.js/commit/7908e9da02cea12a969c792686565f746882f462
   const timestamp = new Date().getTime()-30000;
+  console.log(`Timestamp: ${timestamp}`)
   const msg = Buffer.from(dotenv.parsed.API_KEY + req.body.meetingNumber + timestamp + req.body.role).toString('base64');
+  console.log(`Message: ${msg}`)
   const hash = crypto.createHmac('sha256', dotenv.parsed.API_SECRET).update(msg).digest('base64');
+  console.log(`Hash: ${hash}`)
   const signature = Buffer.from(`${dotenv.parsed.API_KEY}.${req.body.meetingNumber}.${timestamp}.${req.body.role}.${hash}`).toString('base64');
+  console.log(`Signature: ${signature}`)
 
   res.json({
     signature: signature,
     API_KEY: dotenv.parsed.API_KEY
   });
   console.log("Sent response");
+  // Prints out ServerResponse
+  // var util = require('util')
+  // console.log(`Response: ${util.inspect(res)}`)
 })
 
 //#region all DB endpoints
@@ -90,7 +99,6 @@ app.delete('/meeting_log/:meeting_number', db.deleteMeetingLog)
       console.log('socket-id "'+socket['id']+'" connected');
       connected_users[socket['id']] = {};//Maybe include the list of devices this client is connected to
 
-
       socket.on('disconnect', function(){
         console.log('socket-id "'+socket['id']+'" disconnected');
         delete connected_users[socket['id']];
@@ -106,7 +114,7 @@ app.delete('/meeting_log/:meeting_number', db.deleteMeetingLog)
             break
           }
         }
-        
+
       });
       //Listen for set_room event from client
 
@@ -125,7 +133,7 @@ app.delete('/meeting_log/:meeting_number', db.deleteMeetingLog)
           for(var user_socket in users_in_room[obj['room']]){
             if(users_in_room[obj['room']][user_socket] == obj['to_username']){
               console.log('Message "'+obj['message']+'" sent to user:'+users_in_room[obj['room']][user_socket]);
-              io.to(user_socket).emit('recieved_private_message',obj['message']);  
+              io.to(user_socket).emit('recieved_private_message',obj['message']);
             }
           }
         }
@@ -134,7 +142,7 @@ app.delete('/meeting_log/:meeting_number', db.deleteMeetingLog)
           console.log(msg);
           io.to(socket['id']).emit('recieved_private_message',msg);
         }
-        
+
       });
 
   });
