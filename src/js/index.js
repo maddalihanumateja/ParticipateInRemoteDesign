@@ -42,13 +42,11 @@ document.getElementById('participant_side').addEventListener('click', (e) => {
             $('#participant_meeting_buttons').html("");
             for(var i=0;i<data.length;i++){
                 var button = document.createElement("button");
-                button.innerHTML = 'Click here to join meeting '+i;
+                button.innerHTML = 'Click here to join meeting '+(i+1);
                 button.classList.add('btn','btn-primary');
-                $('#participant_meeting_buttons').append(button);
+                button.setAttribute("id","pjoin_mtg_"+(i+1));
                 var meetConfig_i = {
-                        meetingNumber: data[i].meeting_number,
-                        userName: document.getElementById('participant_display_name').value,
-                        userEmail: "",
+                        meetingNumber: parseInt(data[i].meeting_number),
                         passWord: data[i].meeting_password,
                         user_type: 'participant',
                         leaveUrl: 'https://zoom.us',
@@ -57,9 +55,13 @@ document.getElementById('participant_side').addEventListener('click', (e) => {
                     };
                 // 3. Add event handler
                 button.addEventListener ("click", function(e) {
-                    e.preventDefault();
+                        e.preventDefault();
+                        //Get user name and email only after the join button is clicked
+                        meetConfig_i["userName"] = document.getElementById('participant_display_name').value;
+                        meetConfig_i["userEmail"] = "";
                         initialize_button_click(meetConfig_i);
                 });
+                $('#participant_meeting_buttons').append(button);
             }
             
         }
@@ -91,13 +93,11 @@ document.getElementById('researcher_side').addEventListener('click', (e) => {
             $('#researcher_meeting_buttons').html("");
             for(var i=0;i<data.length;i++){
                 var button = document.createElement("button");
-                button.innerHTML = 'Click here to join meeting '+i;
+                button.innerHTML = 'Click here to join meeting '+(i+1);
                 button.classList.add('btn','btn-primary');
-                $('#researcher_meeting_buttons').append(button);
+                button.setAttribute("id","rjoin_mtg_"+(i+1));
                 var meetConfig_i = {
-                        meetingNumber: data[i].meeting_number,
-                        userName: document.getElementById('display_name').value,
-                        userEmail: document.getElementById('display_email').value,
+                        meetingNumber: parseInt(data[i].meeting_number),
                         passWord: data[i].meeting_password,
                         user_type: 'researcher',
                         leaveUrl: 'https://zoom.us',
@@ -106,9 +106,13 @@ document.getElementById('researcher_side').addEventListener('click', (e) => {
                     };
                 // 3. Add event handler
                 button.addEventListener ("click", function(e) {
-                    e.preventDefault();
+                        e.preventDefault();
+                        //Get user name and email only after the join button is clicked
+                        meetConfig_i["userName"] = document.getElementById('display_name').value;
+                        meetConfig_i["userEmail"] = document.getElementById('display_email').value;
                         initialize_button_click(meetConfig_i);
                 });
+                $('#researcher_meeting_buttons').append(button);
             }
         }
     });
