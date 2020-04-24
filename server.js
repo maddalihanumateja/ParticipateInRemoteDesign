@@ -21,6 +21,8 @@ var http = require('http').createServer(app);
 var io = require('socket.io')(http)
 const compiler = webpack(config);
 
+const PORT = process.env.PORT || 5000
+
 // socket related variables
 
 //Object storing users connected to the server
@@ -141,7 +143,7 @@ app.delete('/meeting_log/:meeting_number', db.deleteMeetingLog)
 
 //#endregion
 
-// Serve the files on port 3000.
-http.listen(3000, function () {
+// Serve the files on PORT.
+http.listen(PORT, function () {
   console.log('Example app listening on port 3000!\n');
 });

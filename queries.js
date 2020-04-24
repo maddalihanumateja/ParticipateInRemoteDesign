@@ -6,7 +6,7 @@ const pool = new Pool({
   host: process.env.DB_URL,
   database: process.env.DATABASE,
   password: process.env.PASSWORD,
-  port: process.env.PORT,
+  port: process.env.DB_PORT,
 })
 
 const getAllMeetingLogs = (request, response) => {
