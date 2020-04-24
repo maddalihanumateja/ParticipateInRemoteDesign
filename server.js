@@ -60,13 +60,13 @@ app.post('/zoom_sign', (req, res) => {
   //zoom websdk signature example was updated 5 days back
   //https://github.com/zoom/websdk-sample-signature-node.js/commit/7908e9da02cea12a969c792686565f746882f462
   const timestamp = new Date().getTime()-30000;
-  const msg = Buffer.from(dotenv.parsed.API_KEY + req.body.meetingNumber + timestamp + req.body.role).toString('base64');
-  const hash = crypto.createHmac('sha256', dotenv.parsed.API_SECRET).update(msg).digest('base64');
-  const signature = Buffer.from(`${dotenv.parsed.API_KEY}.${req.body.meetingNumber}.${timestamp}.${req.body.role}.${hash}`).toString('base64');
+  const msg = Buffer.from(process.env.API_KEY + req.body.meetingNumber + timestamp + req.body.role).toString('base64');
+  const hash = crypto.createHmac('sha256', process.env.API_SECRET).update(msg).digest('base64');
+  const signature = Buffer.from(`${process.env.API_KEY}.${req.body.meetingNumber}.${timestamp}.${req.body.role}.${hash}`).toString('base64');
 
   res.json({
     signature: signature,
-    API_KEY: dotenv.parsed.API_KEY
+    API_KEY: process.env.API_KEY
   });
   console.log("Sent response");
 })

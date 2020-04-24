@@ -2,11 +2,11 @@ var dotenv = require('dotenv').config({path: __dirname + '/.env'});
 const Pool = require('pg').Pool
 
 const pool = new Pool({
-  user: dotenv.parsed.USER,
-  host: dotenv.parsed.HOST,
-  database: dotenv.parsed.DATABASE,
-  password: dotenv.parsed.PASSWORD,
-  port: dotenv.parsed.PORT,
+  user: process.env.USER,
+  host: process.env.DB_URL,
+  database: process.env.DATABASE,
+  password: process.env.PASSWORD,
+  port: process.env.PORT,
 })
 
 const getAllMeetingLogs = (request, response) => {
