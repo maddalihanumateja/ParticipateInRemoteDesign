@@ -20,7 +20,7 @@
   "author": "Teja Maddali",
   "license": "ISC",
   "dependencies": {
-    "@zoomus/websdk": "^1.7.4",
+    "@zoomus/websdk": "^1.7.6",
     "body-parser": "^1.19.0",
     "cors": "^2.8.5",
     "dotenv": "^8.2.0",
