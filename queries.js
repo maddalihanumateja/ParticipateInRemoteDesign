@@ -1,5 +1,8 @@
 var dotenv = require('dotenv').config({path: __dirname + '/.env'});
 const Pool = require('pg').Pool
+const {createDb, migrate} = require("postgres-migrations")
+
+createAndMigrateDB()
 
 const pool = new Pool({
   user: dotenv.parsed.USER,
@@ -8,6 +11,28 @@ const pool = new Pool({
   password: dotenv.parsed.PASSWORD,
   port: dotenv.parsed.PORT,
 })
+
+function createAndMigrateDB() {
+    createDb("database-name", {
+        user: dotenv.parsed.USER,
+        host: dotenv.parsed.HOST,
+        database: dotenv.parsed.DATABASE,
+        password: dotenv.parsed.PASSWORD,
+        port: parseInt(dotenv.parsed.PORT)
+    }).then(() => {
+        return migrate({
+            user: dotenv.parsed.USER,
+            host: dotenv.parsed.HOST,
+            database: dotenv.parsed.DATABASE,
+            password: dotenv.parsed.PASSWORD,
+            port: parseInt(dotenv.parsed.PORT)
+        }, "migrations")
+        // "migrations" is the path where all the migration files are contained
+    }).then(() => {} )
+    .catch((err) => {
+        console.log(err)
+    })
+}
 
 const getAllMeetingLogs = (request, response) => {
   pool.query('SELECT * FROM meeting_logs WHERE meeting_host=true ORDER BY meeting_id ASC', (error, results) => {
@@ -74,13 +99,13 @@ const updateMeetingLogEnded = (request, response) => {
   const meeting_number = parseInt(request.params.meeting_number)
 
   pool.query(
-    'UPDATE users SET meeting_ended = true WHERE user_name = $1 AND meeting_number = $2 AND meeting_host = true;',
+    'UPDATE meeting_logs SET meeting_ended = true WHERE user_name = $1 AND meeting_number = $2 AND meeting_host = true;',
     [user_name, meeting_number],
     (error, results) => {
       if (error) {
         throw error
       }
-      response.status(200).send(`Set meeting_ended=true for Meeting Log with ID: ${id}`)
+      response.status(200).send(`Set meeting_ended=true for Meeting Log with ID: ${meeting_number}`)
     }
   )
 }
