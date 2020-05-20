@@ -56,7 +56,7 @@ app.get('/', function(req, res, next) {
 
 /* POST request with meeting details and response with zoom signature */
 app.post('/zoom_sign', (req, res) => {
-  
+
   //zoom websdk signature example was updated 5 days back
   //https://github.com/zoom/websdk-sample-signature-node.js/commit/7908e9da02cea12a969c792686565f746882f462
   const timestamp = new Date().getTime()-30000;
@@ -97,8 +97,10 @@ app.delete('/meeting_log/:meeting_number', db.deleteMeetingLog)
         for(room in users_in_room){
           for(socket_id in users_in_room[room]){
             if(socket_id == socket['id']){
+              // fetch before you delete user name with meeting number
+              let leaving_username = users_in_room[room][socket_id]
               delete users_in_room[room][socket_id]
-              io.to(room).emit('room_leave_event',{'message':'left room '+room, 'users_in_room':Object.values(users_in_room[room]), 'room':room});
+              io.to(room).emit('room_leave_event',{'message':'left room '+room, 'users_in_room':Object.values(users_in_room[room]), 'room':room, 'leaving_username': leaving_username});
               break
             }
           }
@@ -106,7 +108,7 @@ app.delete('/meeting_log/:meeting_number', db.deleteMeetingLog)
             break
           }
         }
-        
+
       });
       //Listen for set_room event from client
 
@@ -125,7 +127,7 @@ app.delete('/meeting_log/:meeting_number', db.deleteMeetingLog)
           for(var user_socket in users_in_room[obj['room']]){
             if(users_in_room[obj['room']][user_socket] == obj['to_username']){
               console.log('Message "'+obj['message']+'" sent to user:'+users_in_room[obj['room']][user_socket]);
-              io.to(user_socket).emit('recieved_private_message',obj['message']);  
+              io.to(user_socket).emit('recieved_private_message',obj['message']);
             }
           }
         }
@@ -134,7 +136,7 @@ app.delete('/meeting_log/:meeting_number', db.deleteMeetingLog)
           console.log(msg);
           io.to(socket['id']).emit('recieved_private_message',msg);
         }
-        
+
       });
 
   });

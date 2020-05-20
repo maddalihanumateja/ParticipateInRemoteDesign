@@ -7,7 +7,7 @@ console.log(JSON.stringify(ZoomMtg.checkSystemRequirements()));
 
 // it's option if you want to change the WebSDK dependency link resources. setZoomJSLib must be run at first
 //ZoomMtg.setZoomJSLib('https://source.zoom.us/1.7.4/lib', '/av'); // CDN version default
-// else ZoomMtg.setZoomJSLib('https://jssdk.zoomus.cn/1.7.4/lib', '/av'); // china cdn option 
+// else ZoomMtg.setZoomJSLib('https://jssdk.zoomus.cn/1.7.4/lib', '/av'); // china cdn option
 // ZoomMtg.setZoomJSLib('http://localhost:9999/node_modules/@zoomus/websdk/dist/lib', '/av'); // Local version default, Angular Project change to use cdn version
 ZoomMtg.preLoadWasm();
 ZoomMtg.prepareJssdk();
@@ -27,7 +27,7 @@ var socket = io();
 
 //When you click on the participant side hide the researcher side and display the participant's options
 document.getElementById('participant_side').addEventListener('click', (e) => {
-    
+
     $('#researcher_side').hide(400);
     $('#participant_side_init_message').hide();
     //Change to log only active meetings
@@ -61,13 +61,13 @@ document.getElementById('participant_side').addEventListener('click', (e) => {
                         initialize_button_click(meetConfig_i);
                 });
             }
-            
+
         }
     });
 
-    // Note: Get meetConfig from the server. Search for available (running) meetings in a meetings table. 
+    // Note: Get meetConfig from the server. Search for available (running) meetings in a meetings table.
     // The meetings list should be updated whenever the researcher starts a meeting.
-    // Display how many meetings are currently available for the participant. 
+    // Display how many meetings are currently available for the participant.
     // Ask for the participant's name (Or, for example, let them choose from a list of avatars/nicknames if they can't write their name for some reason).
     // Display Join Meeting Button
     // Update user logs if joining the meeting is successful (meeting number, user-name (manually entered or chosen automatically), i.p. address, join meeting time, researcher?, leave meeting time)
@@ -113,9 +113,9 @@ document.getElementById('researcher_side').addEventListener('click', (e) => {
         }
     });
 
-    // Note: Get meetConfig from the server. Search for available (running) meetings in a meetings table. This is for when another researcher would like to join an existing meeting. 
+    // Note: Get meetConfig from the server. Search for available (running) meetings in a meetings table. This is for when another researcher would like to join an existing meeting.
     // The meetings list should be updated whenever the researcher starts a meeting.
-    // Display how many meetings are currently available for the participant. 
+    // Display how many meetings are currently available for the participant.
     // Ask for the participant's name (Or, for example, let them choose from a list of avatars/nicknames if they can't write their name for some reason).
     // Update user logs if starting the meeting is successful (meeting number, user-name (manually entered or chosen automatically), i.p. address, join meeting time, researcher?, leave meeting time)
 
@@ -188,12 +188,12 @@ var initialize_button_click = (meetConfig) => {
                                     headers: {
                                         'Content-Type': 'application/json'
                                     },
-                                    body: JSON.stringify({meeting_number: meetConfig.meetingNumber, 
-                                        meeting_password: meetConfig.passWord, 
-                                        user_name: meetConfig.userName, 
-                                        email: meetConfig.userEmail, 
-                                        ip_address: meetConfig.ip_address, 
-                                        user_type: meetConfig.user_type, 
+                                    body: JSON.stringify({meeting_number: meetConfig.meetingNumber,
+                                        meeting_password: meetConfig.passWord,
+                                        user_name: meetConfig.userName,
+                                        email: meetConfig.userEmail,
+                                        ip_address: meetConfig.ip_address,
+                                        user_type: meetConfig.user_type,
                                         meeting_host: meetConfig.role = 1 ? true:false})
                                     }).then((response) => {
                                     return response.json();
@@ -233,6 +233,18 @@ socket.on('room_leave_event', function(obj){
       console.log(obj['users_in_room']);
       users_in_room = obj['users_in_room'].slice();
       console.log(obj['message']);
+
+      fetch(`/meeting_log/${obj['leaving_username']}/${obj['room']}`, {
+          method: 'PUT',
+          headers: {
+              'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+              user_name: obj['leaving_username'],
+              meeting_number: obj['room']})
+          }).then((response) => {
+              return response.json();
+       }).then((data) => {console.log(data)});
     });
 
 socket.on('recieved_private_message', function(msg){
