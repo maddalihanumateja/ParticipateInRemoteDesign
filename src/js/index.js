@@ -194,7 +194,7 @@ var initialize_button_click = (meetConfig) => {
                                         email: meetConfig.userEmail,
                                         ip_address: meetConfig.ip_address,
                                         user_type: meetConfig.user_type,
-                                        meeting_host: meetConfig.role = 1 ? true:false})
+                                        meeting_host: meetConfig.role == 1 ? true:false})
                                     }).then((response) => {
                                     return response.json();
                                 }).then((data) => {console.log(data)});
