@@ -21,6 +21,9 @@ var http = require('http').createServer(app);
 var io = require('socket.io')(http)
 const compiler = webpack(config);
 
+//Intialize DB and migrations
+db.createAndMigrateDB();
+
 // socket related variables
 
 //Object storing users connected to the server

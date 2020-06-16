@@ -1,13 +1,27 @@
 var dotenv = require('dotenv').config({path: __dirname + '/.env'});
 const Pool = require('pg').Pool
+const {createDb, migrate} = require("postgres-migrations")
 
-const pool = new Pool({
+
+const dbConfig = {
   user: dotenv.parsed.USER,
   host: dotenv.parsed.DB_URL,
   database: dotenv.parsed.DATABASE,
   password: dotenv.parsed.PASSWORD,
-  port: dotenv.parsed.DB_PORT,
-})
+  port: parseInt(dotenv.parsed.DB_PORT),
+}
+
+const pool = new Pool(dbConfig)
+
+function createAndMigrateDB() {
+    createDb(dotenv.parsed.DATABASE, dbConfig).then(() => {
+        return migrate(dbConfig, "migrations")
+        // "migrations" is the path where all the migration files are contained
+    }).then(() => {} )
+    .catch((err) => {
+        console.log(err)
+    })
+}
 
 const getAllMeetingLogs = (request, response) => {
   pool.query('SELECT * FROM meeting_logs WHERE meeting_host=true ORDER BY meeting_id ASC', (error, results) => {
@@ -102,4 +116,5 @@ module.exports = {
   createMeetingLog,
   deleteMeetingLog,
   updateMeetingLogEndedServer,
+  createAndMigrateDB,
 }
