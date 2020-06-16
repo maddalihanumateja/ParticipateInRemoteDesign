@@ -2,19 +2,18 @@ var dotenv = require('dotenv').config({path: __dirname + '/.env'});
 const Pool = require('pg').Pool
 const {createDb, migrate} = require("postgres-migrations")
 
-
 const dbConfig = {
-  user: dotenv.parsed.USER,
-  host: dotenv.parsed.DB_URL,
-  database: dotenv.parsed.DATABASE,
-  password: dotenv.parsed.PASSWORD,
-  port: parseInt(dotenv.parsed.DB_PORT),
+  user: process.env.USER,
+  host: process.env.DB_URL,
+  database: process.env.DATABASE,
+  password: process.env.PASSWORD,
+  port: parseInt(process.env.DB_PORT),
 }
 
 const pool = new Pool(dbConfig)
 
 function createAndMigrateDB() {
-    createDb(dotenv.parsed.DATABASE, dbConfig).then(() => {
+    createDb(process.env.DATABASE, dbConfig).then(() => {
         return migrate(dbConfig, "migrations")
         // "migrations" is the path where all the migration files are contained
     }).then(() => {} )
