@@ -1,13 +1,26 @@
 var dotenv = require('dotenv').config({path: __dirname + '/.env'});
 const Pool = require('pg').Pool
+const {createDb, migrate} = require("postgres-migrations")
 
-const pool = new Pool({
+const dbConfig = {
   user: process.env.USER,
   host: process.env.DB_URL,
   database: process.env.DATABASE,
   password: process.env.PASSWORD,
-  port: process.env.DB_PORT,
-})
+  port: parseInt(process.env.DB_PORT),
+}
+
+const pool = new Pool(dbConfig)
+
+function createAndMigrateDB() {
+    createDb(process.env.DATABASE, dbConfig).then(() => {
+        return migrate(dbConfig, "migrations")
+        // "migrations" is the path where all the migration files are contained
+    }).then(() => {} )
+    .catch((err) => {
+        console.log(err)
+    })
+}
 
 const getAllMeetingLogs = (request, response) => {
   pool.query('SELECT * FROM meeting_logs WHERE meeting_host=true ORDER BY meeting_id ASC', (error, results) => {
@@ -69,18 +82,17 @@ const createMeetingLog = (request, response) => {
   })
 }
 
-const updateMeetingLogEnded = (request, response) => {
-  const user_name = request.params.user_name
-  const meeting_number = parseInt(request.params.meeting_number)
+const updateMeetingLogEndedServer = (user_name, meeting_num) => {
+  const meeting_number = parseInt(meeting_num)
 
   pool.query(
-    'UPDATE users SET meeting_ended = true WHERE user_name = $1 AND meeting_number = $2 AND meeting_host = true;',
-    [user_name, meeting_number],
+    'WITH user_logs as (SELECT * FROM meeting_logs WHERE user_name = $1 AND meeting_number = $2 ORDER BY meeting_join_time DESC LIMIT 1) UPDATE meeting_logs SET meeting_ended = true, meeting_leave_time = $3 WHERE meeting_id in (SELECT meeting_id from user_logs);',
+    [user_name, meeting_number, new Date()],
     (error, results) => {
       if (error) {
         throw error
       }
-      response.status(200).send(`Set meeting_ended=true for Meeting Log with ID: ${id}`)
+      return(`Set meeting_ended=true for Meeting Number: ${meeting_number} and User:${user_name}`)
     }
   )
 }
@@ -92,7 +104,7 @@ const deleteMeetingLog = (request, response) => {
     if (error) {
       throw error
     }
-    response.status(200).send(`Meeting Log deleted with ID: ${id}`)
+    response.status(200).send(`Meeting Log deleted with Meeting Number: ${meeting_number}`)
   })
 }
 
@@ -101,6 +113,7 @@ module.exports = {
   getActiveMeetingLogs,
   getMeetingLog,
   createMeetingLog,
-  updateMeetingLogEnded,
   deleteMeetingLog,
+  updateMeetingLogEndedServer,
+  createAndMigrateDB,
 }

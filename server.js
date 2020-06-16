@@ -21,6 +21,11 @@ var http = require('http').createServer(app);
 var io = require('socket.io')(http)
 const compiler = webpack(config);
 
+
+//Intialize DB and migrations
+db.createAndMigrateDB();
+
+//Initialize server port
 const PORT = process.env.PORT || 5000
 
 // socket related variables
@@ -78,7 +83,6 @@ app.get('/meeting_logs', db.getAllMeetingLogs)
 app.get('/meeting_active_logs', db.getActiveMeetingLogs)
 app.get('/meeting_log/:user_name/:meeting_number', db.getMeetingLog)
 app.post('/meeting_log', db.createMeetingLog)
-app.put('/meeting_log/:user_name/:meeting_number', db.updateMeetingLogEnded)
 app.delete('/meeting_log/:meeting_number', db.deleteMeetingLog)
 
 //#endregion
@@ -95,10 +99,15 @@ app.delete('/meeting_log/:meeting_number', db.deleteMeetingLog)
 
       socket.on('disconnect', function(){
         console.log('socket-id "'+socket['id']+'" disconnected');
+
         delete connected_users[socket['id']];
         for(room in users_in_room){
           for(socket_id in users_in_room[room]){
             if(socket_id == socket['id']){
+
+              //update database meeting logs here
+              console.log(db.updateMeetingLogEndedServer(users_in_room[room][socket_id],room));
+
               delete users_in_room[room][socket_id]
               io.to(room).emit('room_leave_event',{'message':'left room '+room, 'users_in_room':Object.values(users_in_room[room]), 'room':room});
               break

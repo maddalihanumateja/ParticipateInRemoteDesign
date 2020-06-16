@@ -1,0 +1,1 @@
+module.exports = `CREATE TYPE user_role AS ENUM ('researcher', 'participant');`

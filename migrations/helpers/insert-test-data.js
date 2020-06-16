@@ -1,0 +1,1 @@
+module.exports = `INSERT INTO meeting_logs(meeting_number, meeting_password,  user_name, email, ip_address, meeting_join_time, meeting_leave_time, user_type, meeting_host, meeting_ended) VALUES (1122442342, '019233', 'test_user', NULL, '192.168.0.1/24', '2020-03-18 06:05:06 US/Eastern','2020-03-18 06:35:06 US/Eastern','researcher',true,true);`
