@@ -12,7 +12,7 @@ The objective of this project is to create an enhanced video conferencing enviro
 - Open a terminal/cmd/powershell window. Change directory to the ParticipateInRemoteDesign folder.
 - First use the `npm install` command to install the required modules.
 - To start the app use the `nodemon server` command. Nodemon will immediately restart the app when you make any changes to the code.
-- Open a browser window and go to localhost:3000 to view the app (default address).
+- Open a browser window and go to localhost:5000 to view the app (default address).
 
 # Tutorials used #
 - [Build your first local server and web app with Node.js](https://hackernoon.com/build-your-first-local-server-and-web-app-with-node-js-5a5d9e00aff0) by @carstens.christoph on [hackernoon](https://hackernoon.com/). This will go through installing Node JS on your computer and create a simple webapp. At the end of this you'll know how to get an app running on your computer that shows an index page, very basic.
