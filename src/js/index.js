@@ -206,7 +206,47 @@ var initialize_button_click = (meetConfig) => {
                                 //start a socket connection. send a set_room event to the server
                                 socket.emit('set_room', {'room':meetConfig.meetingNumber, 'username':meetConfig.userName});
 
+                                /* var rcd = $('<button/>',
+                                    {
+                                        text: 'RCD Devices',
+                                        click: function () { alert('hi'); }
+                                    });
+
+                                var divElement = $('<div class=\'left-tool-item\' id=\'rcd\'></div>');
+
+                                $(divElement).appendTo('#wc-footer-left');
+
+                                $(rcd).appendTo('#rcd');
+
+                                $(rcd).css('color', 'red');
+
+                                $(rcd).attr('type', 'button');
+
+                                $(rcd).attr('aria-label', 'mute my microphone');
+
+                                $(rcd).addClass('join-audio');
+
+                                $(rcd).addClass('ax-outline'); */
+
+                                /* $(aElement).appendTo('#wc-container-right');
+                                $(aElement).appendTo('ul.dropdown-menu.dropdown-menu-right'); */
+                                /* var checkExist = setInterval(function() {
+                                    if ($('#wc-container-right').length && !('#injected').length) {
+                                        var aElement = $('<li role=\'presentation\' id=\'injected\' class><a role=\'menuitem\' tabindex=\'-1\' href\'#\'>Projector</a></li>');
+                                        $(aElement).appendTo('ul.dropdown-menu.dropdown-menu-right');
+                                        clearInterval(checkExist);
+                                    }
+                                 }, 100); */
+                                 const container = document.querySelector('div.meeting-client-inner');
+                                 observer.observe(container.childNodes[0], observerConfig);
+                                /* $('button.undefined.footer-button__button.ax-outline').click(function() {
+                                    var aElement = $('<li role=\'presentation\' id=\'injected\' class><a role=\'menuitem\' tabindex=\'-1\' href\'#\'>Projector</a></li>');
+                                    $(aElement).appendTo('ul.dropdown-menu.dropdown-menu-right');
+                                    console.log('Hello');
+                                }); */
+
                                 console.log('join meeting success');
+                                //observer.observe(container, observerConfig);
                             },
                             error: (error) => {
                                 console.log(error);
@@ -248,3 +288,29 @@ var researcher_trigger_event = function(obj){
       socket.emit('send_private_message', {'to_username':obj['to_username'], 'message':obj['message'], 'room': obj['room']});
       return false;
 }
+
+var observer = new MutationObserver(function (mutations) {
+    console.log("mutation spotted");
+    mutations.forEach(function (mutation) {
+        if (mutation.addedNodes.length) {
+            console.log('Added');
+            var aElement = $('<li role=\'presentation\' id=\'injected\' class><a role=\'menuitem\' tabindex=\'-1\' href\'#\'>Projector</a></li>');
+            $(aElement).appendTo('ul.dropdown-menu.dropdown-menu-right');
+            if ($('#injected').length) {
+                console.log('Element successfully injected!');
+                $('#injected').click(function() {
+                    $('#injected').css('cursor', 'pointer');
+                    console.log('Projector button was clicked!');
+                });
+            }
+        }
+        if (mutation.removedNodes.length) {
+            console.log('Removed');
+        }
+    });
+});
+
+var observerConfig = {
+    childList: true
+};
+
