@@ -143,8 +143,8 @@ document.getElementById('start_meeting').addEventListener('click', (e) => {
     projector_button.classList.add('btn','btn-primary');
     projector_button.onclick = function(){
         //send this to arandom username right now
-        var obj = {'to_username': 'anon', 'message':'projector do something', 'room': parseInt(document.getElementById('meeting_number').value, 10)}
-        //console.log(obj);
+        var obj = {'to_username': 'anon2', 'message':'projector do something', 'room': parseInt(document.getElementById('meeting_number').value, 10)}
+        console.log(obj);
         researcher_trigger_event(obj);
     };
     //$('#zmmtg-root').appendTo('#main_view');
@@ -294,14 +294,22 @@ var observer = new MutationObserver(function (mutations) {
     mutations.forEach(function (mutation) {
         if (mutation.addedNodes.length) {
             console.log('Added');
-            var aElement = $('<li role=\'presentation\' id=\'injected\' class><a role=\'menuitem\' tabindex=\'-1\' href\'#\'>Projector</a></li>');
+            var aElement = $('<li role=\'presentation\' class=\'injected\'><a role=\'menuitem\' tabindex=\'-1\' href\'#\'>Projector</a></li>');
             $(aElement).appendTo('ul.dropdown-menu.dropdown-menu-right');
-            if ($('#injected').length) {
+            if ($('.injected').length) {
                 console.log('Element successfully injected!');
-                $('#injected').click(function() {
-                    $('#injected').css('cursor', 'pointer');
-                    console.log('Projector button was clicked!');
+                $('.injected').on('click', function() {
+                    $('.injected').css('cursor', 'pointer');
+                    var obj = {'to_username': 'anon2', 'message':'projector do something', 'room': parseInt(document.getElementById('meeting_number').value, 10)}
+                    console.log(obj);
+                    researcher_trigger_event(obj);
                 });
+                /* $('#injected').click(function() {
+                    $('#injected').css('cursor', 'pointer');
+                    var obj = {'to_username': 'anon', 'message':'projector do something', 'room': parseInt(document.getElementById('meeting_number').value, 10)}
+                    console.log(obj);
+                    researcher_trigger_event(obj);
+                }); */
             }
         }
         if (mutation.removedNodes.length) {
