@@ -154,5 +154,5 @@ app.delete('/meeting_log/:meeting_number', db.deleteMeetingLog)
 
 // Serve the files on PORT.
 http.listen(PORT, function () {
-  console.log('Example app listening on port 3000!\n');
+  console.log('Example app listening on port 5000!\n');
 });
