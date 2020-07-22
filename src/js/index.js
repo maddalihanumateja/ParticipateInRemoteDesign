@@ -206,11 +206,9 @@ var initialize_button_click = (meetConfig) => {
                                 //start a socket connection. send a set_room event to the server
                                 socket.emit('set_room', {'room':meetConfig.meetingNumber, 'username':meetConfig.userName});
 
-                                var username = "Eddy";
                                 const container = document.querySelector('div.meeting-client-inner');
                                 observer.observe(container.childNodes[0], observerConfig);
                                 
-                                console.log(username);
                                 console.log('join meeting success');
                             },
                             error: (error) => {
@@ -259,14 +257,41 @@ var observer = new MutationObserver(function (mutations) {
     mutations.forEach(function (mutation) {
         if (mutation.addedNodes.length) {
             console.log('Added');
-            var aElement = $('<li role=\'presentation\' class=\'injected\'><a role=\'menuitem\' tabindex=\'-1\' href\'#\'>Projector</a></li>');
-            $(aElement).appendTo('ul.dropdown-menu.dropdown-menu-right');
+            console.log(users_in_room);
+            console.log(users_in_room.length)
+            var counter;
+            for (counter = 1; counter < users_in_room.length; counter++) {
+                let aElement = $('<li role=\'presentation\' class=\'injected\'><a role=\'menuitem\' tabindex=\'-1\' href\'#\'>Projector</a></li>');
+                let name = users_in_room[counter];
+                name += "  computer audio muted video off     ";
+                let node = document.querySelector('[aria-label=\'' + name + '\']');
+                
+                $(aElement).attr( {
+                    id: counter
+                });
+
+                $(aElement).appendTo(node.children[1].children[0].children[1].children[1]);
+
+                /* var pid = users_in_room[counter];
+                console.log(pid); */
+
+                /* Add click functionality to each element */
+                /* $('#' + pid).on('click', function() {
+                    $('#' + pid).css('cursor', 'pointer');
+                    var obj = {'to_username': pid, 'message':'projector do something', 'room': parseInt(document.getElementById('meeting_number').value, 10)};
+                    console.log(obj);
+                    researcher_trigger_event(obj);
+                }); */
+                
+            }
+
             if ($('.injected').length) {
                 console.log('Element successfully injected!');
+
                 $('.injected').on('click', function() {
-                    $('.injected').css('cursor', 'pointer');
-                    var obj = {'to_username': 'anon2', 'message':'projector do something', 'room': parseInt(document.getElementById('meeting_number').value, 10)}
-                    console.log(obj);
+                    let pid = $(this).attr('id');
+                    console.log(pid);
+                    let obj = {'to_username': users_in_room[parseInt(pid)], 'message':'projector do something', 'room': parseInt(document.getElementById('meeting_number').value, 10)};
                     researcher_trigger_event(obj);
                 });
             }
