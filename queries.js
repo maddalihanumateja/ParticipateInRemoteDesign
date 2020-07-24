@@ -23,7 +23,7 @@ function createAndMigrateDB() {
 }
 
 const getAllMeetingLogs = (request, response) => {
-  pool.query('SELECT * FROM meeting_logs WHERE meeting_host=true ORDER BY meeting_id ASC', (error, results) => {
+  pool.query('SELECT * FROM logs WHERE meeting_host=true ORDER BY meeting_id ASC', (error, results) => {
     if (error) {
       throw error
     }
@@ -44,10 +44,10 @@ const getMeetingLog = (request, response) => {
   const user_name = request.params.user_name
   const meeting_number = parseInt(request.params.meeting_number)
 
-  pool.query(`SELECT log_id, meeting_logs.meeting_id, meeting_logs.user_id, meeting_join_time, meeting_leave_time, meeting_host, user_name, meeting_number
-      FROM meeting_logs
-      LEFT JOIN users ON meeting_logs.user_id = users.user_id
-      LEFT JOIN meetings ON meeting_logs.meeting_id = meetings.meeting_id
+  pool.query(`SELECT log_id, logs.meeting_id, logs.user_id, meeting_join_time, meeting_leave_time, meeting_host, user_name, meeting_number
+      FROM logs
+      LEFT JOIN users ON logs.user_id = users.user_id
+      LEFT JOIN meetings ON logs.meeting_id = meetings.meeting_id
       WHERE user_name = $1 AND meeting_number = $2;`, [user_name, meeting_number], (error, results) => {
     if (error) {
       throw error
@@ -61,9 +61,9 @@ const getOtherUsersForMeeting = (request, response) => {
   const meeting_number = parseInt(request.params.meeting_number)
 
   pool.query(`SELECT DISTINCT user_name
-      FROM meeting_logs
-      LEFT JOIN meetings on meeting_logs.meeting_id = meetings.meeting_id
-      LEFT JOIN users on meeting_logs.user_id = users.user_id
+      FROM logs
+      LEFT JOIN meetings on logs.meeting_id = meetings.meeting_id
+      LEFT JOIN users on logs.user_id = users.user_id
       WHERE meeting_number = $1 AND meeting_ended=false AND user_name!= $2 AND meeting_leave_time = NULL;`,
       [meeting_number, user_name], (error, results) => {
     if (error) {
@@ -107,8 +107,8 @@ const createMeetingLog = (request, response) => {
     }
   })
 
-  //add log data to meeting_logs table
-  pool.query(`INSERT INTO meeting_logs (meeting_id, meeting_join_time, meeting_leave_time, meeting_host, user_id)
+  //add log data to logs table
+  pool.query(`INSERT INTO logs (meeting_id, meeting_join_time, meeting_leave_time, meeting_host, user_id)
     SELECT
       (SELECT meeting_id from meetings WHERE meeting_number = $1),
       $2, $3, $4,
@@ -128,12 +128,12 @@ const updateMeetingLog = (user_name, meeting_num) => {
 
   pool.query(
     `WITH user_logs as
-    (SELECT log_id, meeting_logs.meeting_id, meeting_logs.user_id, meeting_join_time, meeting_leave_time, meeting_host, user_name, meeting_number
-        FROM meeting_logs
-        LEFT JOIN users ON meeting_logs.user_id = users.user_id
-        LEFT JOIN meetings ON meeting_logs.meeting_id = meetings.meeting_id
+    (SELECT log_id, logs.meeting_id, logs.user_id, meeting_join_time, meeting_leave_time, meeting_host, user_name, meeting_number
+        FROM logs
+        LEFT JOIN users ON logs.user_id = users.user_id
+        LEFT JOIN meetings ON logs.meeting_id = meetings.meeting_id
         WHERE user_name = $1 AND meeting_number = $2 ORDER BY meeting_join_time DESC LIMIT 1)
-    UPDATE meeting_logs set meeting_leave_time = $3 WHERE user_id = (SELECT user_id from users where user_name = $1)
+    UPDATE logs set meeting_leave_time = $3 WHERE user_id = (SELECT user_id from users where user_name = $1)
      AND meeting_leave_time IS NULL;`,
     [user_name, meeting_number, new Date()],
     (error, results) => {
@@ -162,7 +162,7 @@ const endMeeting = (meeting_num) => {
 const deleteMeetingLog = (request, response) => {
   const meeting_number = parseInt(request.params.meeting_number)
 
-  pool.query('DELETE FROM meeting_logs WHERE meeting_number = $1;', [meeting_number], (error, results) => {
+  pool.query('DELETE FROM logs WHERE meeting_number = $1;', [meeting_number], (error, results) => {
     if (error) {
       throw error
     }
