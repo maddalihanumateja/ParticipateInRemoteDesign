@@ -26,7 +26,7 @@ const compiler = webpack(config);
 db.createAndMigrateDB();
 
 //Initialize server port
-const PORT = process.env.PORT || 3000
+const PORT = process.env.PORT || 5000
 
 // socket related variables
 
@@ -154,5 +154,5 @@ app.delete('/meeting_log/:meeting_number', db.deleteMeetingLog)
 
 // Serve the files on PORT.
 http.listen(PORT, function () {
-  console.log('Example app listening on port 3000!\n');
+  console.log('Example app listening on port 5000!\n');
 });
