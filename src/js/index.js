@@ -137,27 +137,6 @@ document.getElementById('start_meeting').addEventListener('click', (e) => {
         ip_address: ip_address,
         role: 1
     });
-    var projector_button = document.createElement("button");
-    var printer_button = document.createElement("button");
-    projector_button.innerHTML = 'Projector';
-    projector_button.classList.add('btn','btn-primary');
-    projector_button.onclick = function(){
-        //send this to arandom username right now
-        var obj = {'to_username': 'anon2', 'message':'projector do something', 'room': parseInt(document.getElementById('meeting_number').value, 10)}
-        console.log(obj);
-        researcher_trigger_event(obj);
-    };
-    //$('#zmmtg-root').appendTo('#main_view');
-    printer_button.innerHTML = 'Printer';
-    printer_button.classList.add('btn','btn-primary');
-    printer_button.onclick = function(){
-        //send this to arandom username right now
-        var obj = {'to_username': 'anon2', 'message':'printer do something', 'room': parseInt(document.getElementById('meeting_number').value, 10)}
-        //console.log(obj);
-        researcher_trigger_event(obj);
-    }
-    $('#custom_buttons').append(projector_button)
-    $('#custom_buttons').append(printer_button)
 });
 
 var initialize_button_click = (meetConfig) => {
