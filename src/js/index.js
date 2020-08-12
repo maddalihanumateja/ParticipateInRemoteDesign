@@ -23,6 +23,9 @@ $.get('https://api.ipify.org?format=json', function(data, status) {
 });
 
 var users_in_room =[];
+var user_devices = [];
+
+//load the connected devices variable
 var socket = io();
 
 //When you click on the participant side hide the researcher side and display the participant's options
@@ -185,6 +188,8 @@ var initialize_button_click = (meetConfig) => {
                                 //start a socket connection. send a set_room event to the server
                                 socket.emit('set_room', {'room':meetConfig.meetingNumber, 'username':meetConfig.userName});
 
+                                fetch('/connected_devices').then(response => response.json());
+
                                 const container = document.querySelector('div.meeting-client-inner');
                                 observer.observe(container.childNodes[0], observerConfig);
                                 
@@ -213,17 +218,30 @@ socket.on('room_join_event', function(obj){
       console.log(obj['users_in_room']);
       users_in_room = obj['users_in_room'].slice();
       console.log(obj['message']);
-    });
+       //emits a socket event that adds the new user
+      console.log(user_devices);
+});
 
 socket.on('room_leave_event', function(obj){
       console.log(obj['users_in_room']);
-      users_in_room = obj['users_in_room'].slice();
+      users_in_room = obj['users_in_room'].slice(); //sets users_in_room equal to the new array
+      user_devices = user_devices.filter((device) => users_in_room.includes(device['username'])); //returns the filtered array back into user_devices
+      console.log(users_in_room);
+      console.log(user_devices);
       console.log(obj['message']);
     });
 
 socket.on('recieved_private_message', function(msg){
       console.log(msg);
     });
+
+socket.on('send_available_devices', function(obj) {
+    console.log(obj);
+    if ((user_devices.filter((device) => obj['username'] === device['username'])).length == 0) { //checks if the json object is already contained in the array
+        user_devices.push(obj);
+    }
+    console.log(user_devices);
+});
 
 
 var researcher_trigger_event = function(obj){
@@ -232,16 +250,14 @@ var researcher_trigger_event = function(obj){
 }
 
 var observer = new MutationObserver(function (mutations) {
-    console.log("mutation spotted");
     mutations.forEach(function (mutation) {
         if (mutation.addedNodes.length) {
-            console.log('Added');
-            console.log(users_in_room);
-            console.log(users_in_room.length)
             var counter;
-            for (counter = 1; counter < users_in_room.length; counter++) {
-                let aElement = $('<li role=\'presentation\' class=\'injected\'><a role=\'menuitem\' tabindex=\'-1\' href\'#\'>Projector</a></li>');
-                let name = users_in_room[counter];
+            for (counter = 1; counter < user_devices.length; counter++) {
+                /* Creates the projector button */
+                let aElement = $('<li role=\'presentation\' class=\'projector\'><a role=\'menuitem\' tabindex=\'-1\' href\'#\'>Projector</a></li>');
+                let bElement = $('<li role=\'presentation\' class=\'printer\'><a role=\'menuitem\' tabindex=\'-1\' href\'#\'>Printer</a></li>');
+                let name = user_devices[counter].username;
                 name += "  computer audio muted video off     ";
                 let node = document.querySelector('[aria-label=\'' + name + '\']');
                 
@@ -249,34 +265,43 @@ var observer = new MutationObserver(function (mutations) {
                     id: counter
                 });
 
-                $(aElement).appendTo(node.children[1].children[0].children[1].children[1]);
+                $(bElement).attr({
+                    id: counter + 100
+                })
 
-                /* var pid = users_in_room[counter];
-                console.log(pid); */
+                /* Appends the buttons conditionally */
 
-                /* Add click functionality to each element */
-                /* $('#' + pid).on('click', function() {
-                    $('#' + pid).css('cursor', 'pointer');
-                    var obj = {'to_username': pid, 'message':'projector do something', 'room': parseInt(document.getElementById('meeting_number').value, 10)};
-                    console.log(obj);
-                    researcher_trigger_event(obj);
-                }); */
-                
+                if (user_devices[counter].devices === 1) {
+                    $(aElement).appendTo(node.children[1].children[0].children[1].children[1]);
+                } else if (user_devices[counter].devices === 2) {
+                    $(bElement).appendTo(node.children[1].children[0].children[1].children[1]);
+                } else if (user_devices[counter].devices === 3) {
+                    $(aElement).appendTo(node.children[1].children[0].children[1].children[1]);
+                    $(bElement).appendTo(node.children[1].children[0].children[1].children[1]);
+                }
+
+                // $(aElement).appendTo(node.children[1].children[0].children[1].children[1]);   
             }
 
-            if ($('.injected').length) {
-                console.log('Element successfully injected!');
-
-                $('.injected').on('click', function() {
+            /* if ($('.projector').length) {
+                $('.projector').on('click', function() {
                     let pid = $(this).attr('id');
-                    console.log(pid);
                     let obj = {'to_username': users_in_room[parseInt(pid)], 'message':'projector do something', 'room': parseInt(document.getElementById('meeting_number').value, 10)};
                     researcher_trigger_event(obj);
                 });
-            }
-        }
-        if (mutation.removedNodes.length) {
-            console.log('Removed');
+            } */
+
+            $('.projector').on('click', function() {
+                let pid = $(this).attr('id');
+                let obj = {'to_username': users_in_room[parseInt(pid)], 'message':'projector do something', 'room': parseInt(document.getElementById('meeting_number').value, 10)};
+                researcher_trigger_event(obj);
+            });
+
+            $('.printer').on('click', function() {
+                let pid = $(this).attr('id');
+                let obj = {'to_username': users_in_room[parseInt(pid) - 100], 'message':'printer do something', 'room': parseInt(document.getElementById('meeting_number').value, 10)};
+                researcher_trigger_event(obj);
+            });
         }
     });
 });

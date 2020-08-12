@@ -21,12 +21,11 @@ var http = require('http').createServer(app);
 var io = require('socket.io')(http)
 const compiler = webpack(config);
 
-
 //Intialize DB and migrations
 db.createAndMigrateDB();
 
 //Initialize server port
-const PORT = process.env.PORT || 3000
+const PORT = process.env.PORT || 5000
 
 // socket related variables
 
@@ -34,6 +33,9 @@ const PORT = process.env.PORT || 3000
 var connected_users = {};
 //Objects storing users in a specific meeting room
 var users_in_room = {};
+
+//Array storing Raspberry Pi IP's as well as connected devices for each user
+var connected_devices = [];
 
 // Tell express to use the webpack-dev-middleware and use the webpack.config.js
 // configuration file as a base.
@@ -61,6 +63,25 @@ app.get('/', function(req, res, next) {
 	res.render('new_index.ejs');
 });
 
+/* Connected devices endpoint */
+app.get('/connected_devices', (req, res) => {
+    for (room in users_in_room) {
+      for (socket_id in users_in_room[room]) {
+        // console.log(users_in_room[room][socket_id]);
+        io.emit('send_available_devices', {'username': users_in_room[room][socket_id], 'devices': Math.floor(Math.random() * 4)});
+      }
+    }
+    
+    /* for (room in users_in_room) {
+      console.log(users_in_room[room]);
+    } */
+
+    /* for (room in users_in_room) {
+      console.log(users_in_room[room][0]);
+      console.log(users_in_room[room].length);
+      io.emit('send_available_devices', {'username': users_in_room[room][users_in_room[room].length - 1], 'devices': Math.floor(Math.random() * 4)});
+    } */
+  });
 /* POST request with meeting details and response with zoom signature */
 app.post('/zoom_sign', (req, res) => {
   
@@ -113,16 +134,13 @@ app.delete('/meeting_log/:meeting_number', db.deleteMeetingLog)
               break
             }
           }
-          if(socket_id == socket['id']){
-            break
-          }
         }
         
       });
       //Listen for set_room event from client
 
       socket.on('set_room',function(obj){
-        console.log('Room name: '+obj['room']+' for username: '+obj['username'])
+        console.log('Room name: '+obj['room']+' for username: '+obj['username']);
         socket.join(obj['room']);
         if(users_in_room[obj['room']] == null){
           users_in_room[obj['room']] = {}
@@ -154,5 +172,5 @@ app.delete('/meeting_log/:meeting_number', db.deleteMeetingLog)
 
 // Serve the files on PORT.
 http.listen(PORT, function () {
-  console.log('Example app listening on port 3000!\n');
+  console.log('Example app listening on port 5000!\n');
 });
