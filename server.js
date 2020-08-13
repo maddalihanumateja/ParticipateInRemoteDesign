@@ -34,9 +34,6 @@ var connected_users = {};
 //Objects storing users in a specific meeting room
 var users_in_room = {};
 
-//Array storing Raspberry Pi IP's as well as connected devices for each user
-var connected_devices = [];
-
 // Tell express to use the webpack-dev-middleware and use the webpack.config.js
 // configuration file as a base.
 app.use(webpackDevMiddleware(compiler, {
@@ -67,21 +64,31 @@ app.get('/', function(req, res, next) {
 app.get('/connected_devices', (req, res) => {
     for (room in users_in_room) {
       for (socket_id in users_in_room[room]) {
-        // console.log(users_in_room[room][socket_id]);
         io.emit('send_available_devices', {'username': users_in_room[room][socket_id], 'devices': Math.floor(Math.random() * 4)});
       }
     }
-    
-    /* for (room in users_in_room) {
-      console.log(users_in_room[room]);
-    } */
-
-    /* for (room in users_in_room) {
-      console.log(users_in_room[room][0]);
-      console.log(users_in_room[room].length);
-      io.emit('send_available_devices', {'username': users_in_room[room][users_in_room[room].length - 1], 'devices': Math.floor(Math.random() * 4)});
-    } */
   });
+
+/* The post endpoint for devices that will take in the objects from Amelia's code and emit a socket event to the client */
+app.post('/devices', (req, res) => {
+  // res.send(req.body);
+  let device_no = 0;
+
+  if (req.body.devices.includes("Projector")) {
+    device_no = 1;
+  }
+  
+  if (req.body.devices.includes("Printer")) {
+    device_no = 2;
+  }
+
+  if (req.body.devices.includes("Printer") && req.body.devices.includes("Projector")) {
+    device_no = 3;
+  }
+
+  io.emit('send_available_devices', {'username': req.body.username, 'devices': device_no, 'ip_address': req.body.ip_address});
+});
+
 /* POST request with meeting details and response with zoom signature */
 app.post('/zoom_sign', (req, res) => {
   

@@ -188,7 +188,7 @@ var initialize_button_click = (meetConfig) => {
                                 //start a socket connection. send a set_room event to the server
                                 socket.emit('set_room', {'room':meetConfig.meetingNumber, 'username':meetConfig.userName});
 
-                                fetch('/connected_devices').then(response => response.json());
+                                fetch('/devices').then(response => response.json());
 
                                 const container = document.querySelector('div.meeting-client-inner');
                                 observer.observe(container.childNodes[0], observerConfig);
@@ -226,8 +226,8 @@ socket.on('room_leave_event', function(obj){
       console.log(obj['users_in_room']);
       users_in_room = obj['users_in_room'].slice(); //sets users_in_room equal to the new array
       user_devices = user_devices.filter((device) => users_in_room.includes(device['username'])); //returns the filtered array back into user_devices
-      console.log(users_in_room);
-      console.log(user_devices);
+      // console.log(users_in_room);
+      // console.log(user_devices);
       console.log(obj['message']);
     });
 
