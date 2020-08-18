@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<head>
+    <title>ParticipateInRemoteDesign</title>
+    <meta charset="utf-8" />
+    <link type="text/css" rel="stylesheet" href="node_modules/@zoomus/websdk/dist/css/bootstrap.css" />
+    <link type="text/css" rel="stylesheet" href="node_modules/@zoomus/websdk/dist/css/react-select.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+</head>
+<body>
+  <div id="device-select">
+      <button id="device-select-btn" type="button" class="btn btn-primary btn-lg btn-block">Select a Device</button>
+  </div>  
+  <div id="device-info">
+      
+  </div>
+  <div id="write-ble">
+      <form>
+        <div class="form-group">
+          <label for="exampleCommand">Example JSON for RPC</label>
+          <input class="form-control" id="exampleJSON" aria-describedby="jsonHelp" placeholder="Enter JSON">
+          <small id="jsonHelp" class="form-text text-muted">JSON to trigger function call on RPi</small>
+        </div>
+      </form>
+      <button id="write-json-btn" type="button" class="btn btn-primary btn-lg btn-block">Write to RPi</button>
+  </div>
+  <div>
+      <div id="read-ble"><br></div>
+      <button id="read-json-btn" type="button" class="btn btn-primary btn-lg btn-block">Read from RPi</button>
+  </div>
+
+  <div id="wifi-select">
+    <button id="connect-wifi-btn" type="button" class="btn btn-primary">Click here to connect the remote design system to WiFi</button>
+    <form>
+      <div class="form-group row">
+          <label for="exampleFormControlSelect1">Select a WiFi network for the remote collab system</label>
+          <div class="col-sm-10">
+            <select class="form-control" id="WiFiSelect">
+              <option>None found yet</option>
+            </select>
+          </div>
+      </div>
+      <div class="form-group row">
+          <label for="inputPassword" class="col-sm-2 col-form-label">Password</label>
+          <div class="col-sm-10">
+            <input type="password" class="form-control" id="inputPassword" placeholder="Password">
+          </div>
+      </div>
+      <button id="wifi-submit-btn" type="submit" class="btn btn-primary">Submit</button>
+    </form>
+  </div>
+<script src="node_modules/react/umd/react.production.min.js"></script>
+<script src="node_modules/react-dom/umd/react-dom.production.min.js"></script>
+<script src="node_modules/redux/dist/redux.min.js"></script>
+<script src="node_modules/redux-thunk/dist/redux-thunk.min.js"></script>
+<script src="node_modules/lodash/lodash.min.js"></script>
+<script src="node_modules/jquery/dist/jquery.min.js"></script>
+
+<script src="../dist/ble_rpi.min.js"></script>
+
+<script>
+
+</script>
+</body>
+</html>
