@@ -61,7 +61,7 @@ function requestDevice() {
         document.getElementById("wifi-submit-btn").addEventListener("click",function(){
           var nwkName = document.getElementById("WiFiSelectOptions").selectedOptions[0].text;
           var password = document.getElementById("inputPassword").value;
-          var data = JSON.stringify({'function':'nwkLogin', 'args':{'ssid':nwkName,'psk':password}});
+          var data = "{\"function\":\"nwkLogin\", \"args\":{\"ssid\":\""+nwkName+"\",\"psk\":\""+password+"\"}}";
           console.log("Sending an RPC to RPi to try to connect to "+nwkName);
           writeCharacteristic(service, characteristicRPCUuid, data);
         });
