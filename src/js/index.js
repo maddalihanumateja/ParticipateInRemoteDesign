@@ -188,7 +188,8 @@ var initialize_button_click = (meetConfig) => {
                                 //start a socket connection. send a set_room event to the server
                                 socket.emit('set_room', {'room':meetConfig.meetingNumber, 'username':meetConfig.userName});
 
-                                fetch('/devices').then(response => response.json());
+                                const iElement = $('<input id=\"file-input\" type=\"file\" style=\"display: none;\" />');
+                                $(iElement).appendTo('#zmmtg-root');
 
                                 const container = document.querySelector('div.meeting-client-inner');
                                 observer.observe(container.childNodes[0], observerConfig);
@@ -226,8 +227,6 @@ socket.on('room_leave_event', function(obj){
       console.log(obj['users_in_room']);
       users_in_room = obj['users_in_room'].slice(); //sets users_in_room equal to the new array
       user_devices = user_devices.filter((device) => users_in_room.includes(device['username'])); //returns the filtered array back into user_devices
-      // console.log(users_in_room);
-      // console.log(user_devices);
       console.log(obj['message']);
     });
 
@@ -252,11 +251,12 @@ var researcher_trigger_event = function(obj){
 var observer = new MutationObserver(function (mutations) {
     mutations.forEach(function (mutation) {
         if (mutation.addedNodes.length) {
-            var counter;
-            for (counter = 1; counter < user_devices.length; counter++) {
+            var counter;  
+            for (counter = 0; counter < user_devices.length; counter++) {
                 /* Creates the projector button */
                 let aElement = $('<li role=\'presentation\' class=\'projector\'><a role=\'menuitem\' tabindex=\'-1\' href\'#\'>Projector</a></li>');
                 let bElement = $('<li role=\'presentation\' class=\'printer\'><a role=\'menuitem\' tabindex=\'-1\' href\'#\'>Printer</a></li>');
+                
                 let name = user_devices[counter].username;
                 name += "  computer audio muted video off     ";
                 let node = document.querySelector('[aria-label=\'' + name + '\']');
@@ -279,17 +279,7 @@ var observer = new MutationObserver(function (mutations) {
                     $(aElement).appendTo(node.children[1].children[0].children[1].children[1]);
                     $(bElement).appendTo(node.children[1].children[0].children[1].children[1]);
                 }
-
-                // $(aElement).appendTo(node.children[1].children[0].children[1].children[1]);   
             }
-
-            /* if ($('.projector').length) {
-                $('.projector').on('click', function() {
-                    let pid = $(this).attr('id');
-                    let obj = {'to_username': users_in_room[parseInt(pid)], 'message':'projector do something', 'room': parseInt(document.getElementById('meeting_number').value, 10)};
-                    researcher_trigger_event(obj);
-                });
-            } */
 
             $('.projector').on('click', function() {
                 let pid = $(this).attr('id');
@@ -299,8 +289,38 @@ var observer = new MutationObserver(function (mutations) {
 
             $('.printer').on('click', function() {
                 let pid = $(this).attr('id');
+                document.getElementById('file-input').click();
+                pid -= 100;
+
+                const formData = new FormData();
+                const inpFile = document.getElementById('file-input');
+
+                inpFile.addEventListener("change", function() {
+                    formData.append("inpFile", inpFile.files[0]);
+
+                    // console.log(formData);
+
+                    fetch('/print', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            form: formData,
+                            user_data: user_devices[pid]
+                        }),
+                        }).then((response) => {
+                        return response.json();
+                    }).then((data) => {console.log(data)})
+                    .catch(error => {
+                        console.error(error);
+                    })
+                });
+
+                // console.log(file_path);
+                
+                
+
+                /* let pid = $(this).attr('id');
                 let obj = {'to_username': users_in_room[parseInt(pid) - 100], 'message':'printer do something', 'room': parseInt(document.getElementById('meeting_number').value, 10)};
-                researcher_trigger_event(obj);
+                researcher_trigger_event(obj); */
             });
         }
     });

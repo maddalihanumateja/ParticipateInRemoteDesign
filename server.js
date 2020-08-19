@@ -8,6 +8,7 @@ const bodyParser = require('body-parser')
 const crypto = require('crypto');
 const cors = require('cors')
 const config = require('./webpack.config.dev.js');
+const fileupload = require('express-fileupload')
 
 //load database functions
 const db = require('./queries')
@@ -42,7 +43,7 @@ app.use(webpackDevMiddleware(compiler, {
 
 app.use("/node_modules", express.static(__dirname + '/node_modules'));
 
-app.use(bodyParser.json(), cors())
+app.use(bodyParser.json(), cors(), fileupload())
 app.options('*', cors());
 
 
@@ -86,7 +87,26 @@ app.post('/devices', (req, res) => {
     device_no = 3;
   }
 
+  res.json({
+    username: req.body.username,
+    devices: device_no,
+    ip_address: req.body.ip_address
+  });
+
   io.emit('send_available_devices', {'username': req.body.username, 'devices': device_no, 'ip_address': req.body.ip_address});
+});
+
+/* This post endpoint to enable user to print a document on their side */
+app.post('/print', (req, res) => {
+  const fileName = req.files.inpFile.name
+
+  if (typeof fileName !== 'undefined') {
+    console.log(fileName);
+
+    
+  }
+
+  res.send("File has been sent");
 });
 
 /* POST request with meeting details and response with zoom signature */
