@@ -103,10 +103,10 @@ app.post('/print', (req, res) => {
   if (typeof fileName !== 'undefined') {
     console.log(fileName);
 
-    
+
   }
 
-  res.send("File has been sent");
+  // res.send("File has been sent");
 });
 
 /* POST request with meeting details and response with zoom signature */
