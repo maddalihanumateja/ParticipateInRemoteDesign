@@ -2,6 +2,8 @@ let serviceUuid = '00000001-810e-4a5b-8d75-3e5b444bc3cf';
 let characteristicReadUuid = '00000002-810e-4a5b-8d75-3e5b444bc3cf';
 let characteristicWriteUuid = '00000003-810e-4a5b-8d75-3e5b444bc3cf';
 let characteristicNotifyUuid = '00000004-810e-4a5b-8d75-3e5b444bc3cf';
+let characteristicRPCUuid = '00000005-810e-4a5b-8d75-3e5b444bc3cf';
+let characteristicStatusUuid = '00000006-810e-4a5b-8d75-3e5b444bc3cf';
 
 var customNotifyCharacteristic;
 var deviceSelectBtn = document.getElementById("device-select-btn");
@@ -42,24 +44,30 @@ function requestDevice() {
     console.log('Obtained Service...');
     console.log('Adding read, write event triggers to buttons...');
     document.getElementById("write-json-btn").addEventListener("click",function(){
-      writeCharacteristic(service, characteristicWriteUuid);
+      var data = document.getElementById("exampleJSON").value;
+      writeCharacteristic(service, characteristicWriteUuid, data);
     });
     document.getElementById("read-json-btn").addEventListener("click",function(){
-      readCharacteristic(service, characteristicWriteUuid).then(value=>{
+      readCharacteristic(service, characteristicStatusUuid).then(value=>{
         document.getElementById("read-ble").innerHTML = value;
       });
     });
     document.getElementById("connect-wifi-btn").addEventListener("click",function(){
       console.log("Fetching the names of available WiFi networks");
       readCharacteristic(service, characteristicReadUuid).then(wifi_names=>{
-        var wifiList = document.getElementById("WiFiSelect");
+        var wifiList = document.getElementById("WiFiSelectOptions");
         wifiList.innerHTML = "";
         wifi_names.split(/\r?\n/).filter(function(el) { return el; }).forEach(nwk => wifiList.insertAdjacentHTML( 'beforeend', "<option>"+nwk+"</option>"))
+        document.getElementById("wifi-submit-btn").addEventListener("click",function(){
+          var nwkName = document.getElementById("WiFiSelectOptions").selectedOptions[0].text;
+          var password = document.getElementById("inputPassword").value;
+          var data = JSON.stringify({'function':'nwkLogin', 'args':{'ssid':nwkName,'psk':password}});
+          console.log("Sending an RPC to RPi to try to connect to "+nwkName);
+          writeCharacteristic(service, characteristicRPCUuid, data);
+        });
       });
     });
-    document.getElementById("wifi-submit-btn").addEventListener("click",function(){
-      
-    });
+    
   });
 }
 
@@ -96,13 +104,13 @@ function readCharacteristic(service, characteristicUuid){
 
 //Example json to send : {"function":"hello","arg1":"world"}
 
-function writeCharacteristic(service, characteristicUuid){
+function writeCharacteristic(service, characteristicUuid, data){
   service.then(service => {
     console.log('Writing Characteristic...');
     return service.getCharacteristic(characteristicUuid);
   })
   .then(characteristic => {
-    var writeJSON = document.getElementById("exampleJSON").value;
+    var writeJSON = data;
     characteristic.writeValue(str2ab(writeJSON));
   })
   .catch(error => {
