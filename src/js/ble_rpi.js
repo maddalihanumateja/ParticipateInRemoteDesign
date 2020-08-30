@@ -47,6 +47,11 @@ function requestDevice() {
       var data = document.getElementById("exampleJSON").value;
       writeCharacteristic(service, characteristicWriteUuid, data);
     });
+    document.getElementById("print-file-btn").addEventListener("click",function(){
+      var data = "{\"function\":\"print\", \"args\":{\"filename\":\""+document.getElementById("examplePrintFile").value+"\"}}";
+      console.log(data)
+      writeCharacteristic(service, characteristicRPCUuid, data);
+    });
     document.getElementById("read-json-btn").addEventListener("click",function(){
       readCharacteristic(service, characteristicStatusUuid).then(value=>{
         document.getElementById("read-ble").innerHTML = value;

@@ -23,6 +23,16 @@
       </form>
       <button id="write-json-btn" type="button" class="btn btn-primary btn-lg btn-block">Write to RPi</button>
   </div>
+  <div id="print-ble">
+      <form>
+        <div class="form-group">
+          <label for="exampleCommand">File to print</label>
+          <input class="form-control" id="examplePrintFile" aria-describedby="printFileHelp" placeholder="Enter Filename (should be a png or pdf file in the Pictures folder of the RPi)">
+          <small id="printFileHelp" class="form-text text-muted">Filename of the file to print</small>
+        </div>
+      </form>
+      <button id="print-file-btn" type="button" class="btn btn-primary btn-lg btn-block">Print using RPi</button>
+  </div>
   <div>
       <div id="read-ble"><br></div>
       <button id="read-json-btn" type="button" class="btn btn-primary btn-lg btn-block">Read from RPi</button>
