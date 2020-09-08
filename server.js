@@ -184,7 +184,7 @@ app.post('/upload', async (req, res) => {
 
             // Gets date in yyyy-mm-dd format
             let date = (new Date()).toISOString().split('T')[0];
-
+            console.log('/uploads/' + date + '/' + avatar.name);
             //Use the mv() method to place the file in upload directory and then by date
             avatar.mv('./uploads/' + date + '/' + avatar.name);
 
