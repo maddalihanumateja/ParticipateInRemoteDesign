@@ -186,6 +186,23 @@ var initialize_button_click = (meetConfig) => {
                             passWord: meetConfig.passWord,
                             success: (success) => {
                                 $('#zmmtg-root').show(200);
+                                console.log('Creating a meeting');
+                                fetch('/meeting', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({meeting_number: meetConfig.meetingNumber,
+                                        meeting_password: meetConfig.passWord,
+                                        user_name: meetConfig.userName,
+                                        email: meetConfig.userEmail,
+                                        ip_address: meetConfig.ip_address,
+                                        user_type: meetConfig.user_type,
+                                        meeting_host: meetConfig.role = 1 ? true:false})
+                                    }).then((response) => {
+                                    return response.json();
+                                }).then((data) => {console.log(data)});
+
                                 console.log('Creating a meeting log');
                                 fetch('/meeting_log', {
                                     method: 'POST',

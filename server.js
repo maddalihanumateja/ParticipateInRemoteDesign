@@ -83,6 +83,7 @@ app.get('/meeting_logs', db.getAllMeetingLogs)
 app.get('/meeting_active_logs', db.getActiveMeetingLogs)
 app.get('/meeting_log/:user_name/:meeting_number', db.getMeetingLog)
 app.post('/meeting_log', db.createMeetingLog)
+app.post('/meeting', db.createMeeting)
 app.delete('/meeting_log/:meeting_number', db.deleteMeetingLog)
 
 //#endregion
@@ -104,12 +105,17 @@ app.delete('/meeting_log/:meeting_number', db.deleteMeetingLog)
         for(room in users_in_room){
           for(socket_id in users_in_room[room]){
             if(socket_id == socket['id']){
-
-              //update database meeting logs here
-              console.log(db.updateMeetingLogEndedServer(users_in_room[room][socket_id],room));
+              //update database meeting logs here when a member leaves
+              console.log(db.updateMeetingLog(users_in_room[room][socket_id],room));
 
               delete users_in_room[room][socket_id]
               io.to(room).emit('room_leave_event',{'message':'left room '+room, 'users_in_room':Object.values(users_in_room[room]), 'room':room});
+
+              // end the meeting if nobody is left
+              if (Object.entries(users_in_room[room]).length === 0) {
+                console.log(db.endMeeting(room));
+              }
+
               break
             }
           }

@@ -1,21 +1,30 @@
 CREATE TYPE user_role AS ENUM ('researcher', 'participant');
 
-CREATE TABLE meeting_logs(
-    meeting_id SERIAL PRIMARY KEY,
-    meeting_number INT NOT NULL,
-    meeting_password VARCHAR(10),
-    user_name VARCHAR(45) NOT NULL,
-    email VARCHAR(100),
-    ip_address inet,
-    meeting_join_time timestamptz,
-    meeting_leave_time timestamptz,
-    user_type user_role,
-    meeting_host BOOLEAN NOT NULL,
-    meeting_ended BOOLEAN NOT NULL
+CREATE TABLE logs
+(
+    log_id SERIAL PRIMARY KEY,
+    meeting_id integer NOT NULL,
+    user_id integer NOT NULL,
+    meeting_host boolean,
+    meeting_join_time timestamp with time zone,
+    meeting_leave_time timestamp with time zone
 );
-	
+
+CREATE TABLE meetings
+(
+    meeting_id SERIAL PRIMARY KEY,
+    meeting_number bigint NOT NULL,
+    meeting_password character varying(10),
+    meeting_ended boolean NOT NULL
+);
+
+CREATE TABLE users
+(
+    user_id SERIAL PRIMARY KEY,
+    user_name character varying(45)NOT NULL,
+    user_ip_address inet,
+    user_type user_role,
+    user_email character varying(100)
+);
+
 SET timezone = 'US/Eastern';
-
-ALTER TABLE meeting_logs ALTER COLUMN meeting_number TYPE BIGINT;
-
-INSERT INTO meeting_logs(meeting_number, meeting_password,  user_name, email, ip_address, meeting_join_time,    meeting_leave_time, user_type, meeting_host, meeting_ended) VALUES (1122442342, '019233', 'test_user', NULL, '192.168.0.1/24', '2020-03-18 06:05:06 US/Eastern','2020-03-18 06:35:06 US/Eastern','researcher',true,true);
