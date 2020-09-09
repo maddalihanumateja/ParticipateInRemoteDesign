@@ -8,6 +8,7 @@ const bodyParser = require('body-parser')
 const crypto = require('crypto');
 const cors = require('cors')
 const config = require('./webpack.config.dev.js');
+const fileupload = require('express-fileupload')
 
 //load database functions
 const db = require('./queries')
@@ -20,7 +21,6 @@ const app = express();
 var http = require('http').createServer(app);
 var io = require('socket.io')(http)
 const compiler = webpack(config);
-
 
 //Intialize DB and migrations
 db.createAndMigrateDB();
@@ -43,7 +43,7 @@ app.use(webpackDevMiddleware(compiler, {
 
 app.use("/node_modules", express.static(__dirname + '/node_modules'));
 
-app.use(bodyParser.json(), cors())
+app.use(bodyParser.json(), cors(), fileupload())
 app.options('*', cors());
 
 
@@ -59,6 +59,54 @@ app.set('view engine', 'ejs');
 
 app.get('/', function(req, res, next) {
 	res.render('new_index.ejs');
+});
+
+/* Connected devices endpoint */
+app.get('/connected_devices', (req, res) => {
+    for (room in users_in_room) {
+      for (socket_id in users_in_room[room]) {
+        io.emit('send_available_devices', {'username': users_in_room[room][socket_id], 'devices': Math.floor(Math.random() * 4)});
+      }
+    }
+  });
+
+/* The post endpoint for devices that will take in the objects from Amelia's code and emit a socket event to the client */
+app.post('/devices', (req, res) => {
+  // res.send(req.body);
+  let device_no = 0;
+
+  if (req.body.devices.includes("Projector")) {
+    device_no = 1;
+  }
+  
+  if (req.body.devices.includes("Printer")) {
+    device_no = 2;
+  }
+
+  if (req.body.devices.includes("Printer") && req.body.devices.includes("Projector")) {
+    device_no = 3;
+  }
+
+  res.json({
+    username: req.body.username,
+    devices: device_no,
+    ip_address: req.body.ip_address
+  });
+
+  io.emit('send_available_devices', {'username': req.body.username, 'devices': device_no, 'ip_address': req.body.ip_address});
+});
+
+/* This post endpoint to enable user to print a document on their side */
+app.post('/print', (req, res) => {
+  const fileName = req.files.inpFile.name
+
+  if (typeof fileName !== 'undefined') {
+    console.log(fileName);
+
+
+  }
+
+  // res.send("File has been sent");
 });
 
 /* POST request with meeting details and response with zoom signature */
@@ -119,16 +167,13 @@ app.delete('/meeting_log/:meeting_number', db.deleteMeetingLog)
               break
             }
           }
-          if(socket_id == socket['id']){
-            break
-          }
         }
         
       });
       //Listen for set_room event from client
 
       socket.on('set_room',function(obj){
-        console.log('Room name: '+obj['room']+' for username: '+obj['username'])
+        console.log('Room name: '+obj['room']+' for username: '+obj['username']);
         socket.join(obj['room']);
         if(users_in_room[obj['room']] == null){
           users_in_room[obj['room']] = {}

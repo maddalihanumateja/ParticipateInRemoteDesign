@@ -23,6 +23,9 @@ $.get('https://api.ipify.org?format=json', function(data, status) {
 });
 
 var users_in_room =[];
+var user_devices = [];
+
+//load the connected devices variable
 var socket = io();
 
 //When you click on the participant side hide the researcher side and display the participant's options
@@ -137,27 +140,6 @@ document.getElementById('start_meeting').addEventListener('click', (e) => {
         ip_address: ip_address,
         role: 1
     });
-    var projector_button = document.createElement("button");
-    var printer_button = document.createElement("button");
-    projector_button.innerHTML = 'Projector';
-    projector_button.classList.add('btn','btn-primary');
-    projector_button.onclick = function(){
-        //send this to arandom username right now
-        var obj = {'to_username': 'anon', 'message':'projector do something', 'room': parseInt(document.getElementById('meeting_number').value, 10)}
-        //console.log(obj);
-        researcher_trigger_event(obj);
-    };
-    //$('#zmmtg-root').appendTo('#main_view');
-    printer_button.innerHTML = 'Printer';
-    printer_button.classList.add('btn','btn-primary');
-    printer_button.onclick = function(){
-        //send this to arandom username right now
-        var obj = {'to_username': 'anon2', 'message':'printer do something', 'room': parseInt(document.getElementById('meeting_number').value, 10)}
-        //console.log(obj);
-        researcher_trigger_event(obj);
-    }
-    $('#custom_buttons').append(projector_button)
-    $('#custom_buttons').append(printer_button)
 });
 
 var initialize_button_click = (meetConfig) => {
@@ -223,6 +205,12 @@ var initialize_button_click = (meetConfig) => {
                                 //start a socket connection. send a set_room event to the server
                                 socket.emit('set_room', {'room':meetConfig.meetingNumber, 'username':meetConfig.userName});
 
+                                const iElement = $('<input id=\"file-input\" type=\"file\" style=\"display: none;\" />');
+                                $(iElement).appendTo('#zmmtg-root');
+
+                                const container = document.querySelector('div.meeting-client-inner');
+                                observer.observe(container.childNodes[0], observerConfig);
+                                
                                 console.log('join meeting success');
                             },
                             error: (error) => {
@@ -248,11 +236,14 @@ socket.on('room_join_event', function(obj){
       console.log(obj['users_in_room']);
       users_in_room = obj['users_in_room'].slice();
       console.log(obj['message']);
-    });
+       //emits a socket event that adds the new user
+      console.log(user_devices);
+});
 
 socket.on('room_leave_event', function(obj){
       console.log(obj['users_in_room']);
-      users_in_room = obj['users_in_room'].slice();
+      users_in_room = obj['users_in_room'].slice(); //sets users_in_room equal to the new array
+      user_devices = user_devices.filter((device) => users_in_room.includes(device['username'])); //returns the filtered array back into user_devices
       console.log(obj['message']);
     });
 
@@ -260,8 +251,99 @@ socket.on('recieved_private_message', function(msg){
       console.log(msg);
     });
 
+socket.on('send_available_devices', function(obj) {
+    console.log(obj);
+    if ((user_devices.filter((device) => obj['username'] === device['username'])).length == 0) { //checks if the json object is already contained in the array
+        user_devices.push(obj);
+    }
+    console.log(user_devices);
+});
+
 
 var researcher_trigger_event = function(obj){
       socket.emit('send_private_message', {'to_username':obj['to_username'], 'message':obj['message'], 'room': obj['room']});
       return false;
 }
+
+var observer = new MutationObserver(function (mutations) {
+    mutations.forEach(function (mutation) {
+        if (mutation.addedNodes.length) {
+            var counter;  
+            for (counter = 0; counter < user_devices.length; counter++) {
+                /* Creates the projector button */
+                let aElement = $('<li role=\'presentation\' class=\'projector\'><a role=\'menuitem\' tabindex=\'-1\' href\'#\'>Projector</a></li>');
+                let bElement = $('<li role=\'presentation\' class=\'printer\'><a role=\'menuitem\' tabindex=\'-1\' href\'#\'>Printer</a></li>');
+                
+                let name = user_devices[counter].username;
+                name += "  computer audio muted video off     ";
+                let node = document.querySelector('[aria-label=\'' + name + '\']');
+                
+                $(aElement).attr( {
+                    id: counter
+                });
+
+                $(bElement).attr({
+                    id: counter + 100
+                })
+
+                /* Appends the buttons conditionally */
+
+                if (user_devices[counter].devices === 1) {
+                    $(aElement).appendTo(node.children[1].children[0].children[1].children[1]);
+                } else if (user_devices[counter].devices === 2) {
+                    $(bElement).appendTo(node.children[1].children[0].children[1].children[1]);
+                } else if (user_devices[counter].devices === 3) {
+                    $(aElement).appendTo(node.children[1].children[0].children[1].children[1]);
+                    $(bElement).appendTo(node.children[1].children[0].children[1].children[1]);
+                }
+            }
+
+            $('.projector').on('click', function() {
+                let pid = $(this).attr('id');
+                let obj = {'to_username': users_in_room[parseInt(pid)], 'message':'projector do something', 'room': parseInt(document.getElementById('meeting_number').value, 10)};
+                researcher_trigger_event(obj);
+            });
+
+            $('.printer').on('click', function() {
+                let pid = $(this).attr('id');
+                document.getElementById('file-input').click();
+                pid -= 100;
+
+                const formData = new FormData();
+                const inpFile = document.getElementById('file-input');
+
+                inpFile.addEventListener("change", function() {
+                    formData.append("inpFile", inpFile.files[0]);
+
+                    // console.log(formData);
+
+                    fetch('/print', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            form: formData,
+                            user_data: user_devices[pid]
+                        }),
+                        }).then((response) => {
+                        return response.json();
+                    }).then((data) => {console.log(data)})
+                    .catch(error => {
+                        console.error(error);
+                    })
+                });
+
+                // console.log(file_path);
+                
+                
+
+                /* let pid = $(this).attr('id');
+                let obj = {'to_username': users_in_room[parseInt(pid) - 100], 'message':'printer do something', 'room': parseInt(document.getElementById('meeting_number').value, 10)};
+                researcher_trigger_event(obj); */
+            });
+        }
+    });
+});
+
+var observerConfig = {
+    childList: true
+};
+
