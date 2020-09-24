@@ -77,7 +77,7 @@ const createMeeting = (request, response) => {
   const meeting_number = request.body.meeting_number;
   const meeting_password = request.body.meeting_password;
 
-  pool.query('INSERT INTO meetings (meeting_number, meeting_password, meeting_ended) values ($1, $2, $3) ON CONFLICT (meeting_number) DO NOTHING',
+  pool.query('INSERT INTO meetings (meeting_number, meeting_password, meeting_ended) values ($1, $2, $3)',
    [meeting_number, meeting_password, false], (error, results) => {
     if (error) {
       console.log(request);
@@ -110,7 +110,7 @@ const createMeetingLog = (request, response) => {
   //add log data to logs table
   pool.query(`INSERT INTO logs (meeting_id, meeting_join_time, meeting_leave_time, meeting_host, user_id)
     SELECT
-      (SELECT meeting_id from meetings WHERE meeting_number = $1),
+      (SELECT max(meeting_id) from meetings WHERE meeting_number = $1),
       $2, $3, $4,
       (SELECT user_id FROM users WHERE user_name = $5 AND user_email = $6);`,
       [meeting_number, new Date(), null, meeting_host, user_name, email], (error, results) => {
@@ -147,7 +147,7 @@ const updateMeetingLog = (user_name, meeting_num) => {
 
 const endMeeting = (meeting_num) => {
   const meeting_number = parseInt(meeting_num)
-  
+
   pool.query('UPDATE meetings SET meeting_ended = true WHERE meeting_number = $1;',
     [meeting_number],
     (error, results) => {
