@@ -8,7 +8,6 @@ const bodyParser = require('body-parser')
 const crypto = require('crypto');
 const cors = require('cors')
 const config = require('./webpack.config.dev.js');
-const fileupload = require('express-fileupload')
 
 //load database functions
 const db = require('./queries')
@@ -21,6 +20,10 @@ const app = express();
 var http = require('http').createServer(app);
 var io = require('socket.io')(http)
 const compiler = webpack(config);
+
+const fileUpload = require('express-fileupload');
+const morgan = require('morgan');
+const _ = require('lodash');
 
 //Intialize DB and migrations
 db.createAndMigrateDB();
@@ -43,9 +46,27 @@ app.use(webpackDevMiddleware(compiler, {
 
 app.use("/node_modules", express.static(__dirname + '/node_modules'));
 
-app.use(bodyParser.json(), cors(), fileupload())
+app.use(bodyParser.json(), cors())
 app.options('*', cors());
 
+
+// Enable files upload
+app.use(fileUpload({
+    createParentPath: true,
+    limits: {
+        fileSize: 2 * 1024 * 1024 * 1024 //2MB max file(s) size
+    },
+}));
+
+// Add other middleware needed to upload files
+app.use(cors());
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({extended: true}));
+app.use(morgan('dev'));
+
+// Make uploads directory static for file hosting
+app.use(express.static('uploads'));
+app.use("/uploads", express.static(__dirname + '/uploads'));
 
 // view engine setup
 app.set('views', path.join(__dirname, '/views'));
@@ -61,57 +82,9 @@ app.get('/', function(req, res, next) {
 	res.render('new_index.ejs');
 });
 
-/* Connected devices endpoint */
-app.get('/connected_devices', (req, res) => {
-    for (room in users_in_room) {
-      for (socket_id in users_in_room[room]) {
-        io.emit('send_available_devices', {'username': users_in_room[room][socket_id], 'devices': Math.floor(Math.random() * 4)});
-      }
-    }
-  });
-
-/* The post endpoint for devices that will take in the objects from Amelia's code and emit a socket event to the client */
-app.post('/devices', (req, res) => {
-  // res.send(req.body);
-  let device_no = 0;
-
-  if (req.body.devices.includes("Projector")) {
-    device_no = 1;
-  }
-  
-  if (req.body.devices.includes("Printer")) {
-    device_no = 2;
-  }
-
-  if (req.body.devices.includes("Printer") && req.body.devices.includes("Projector")) {
-    device_no = 3;
-  }
-
-  res.json({
-    username: req.body.username,
-    devices: device_no,
-    ip_address: req.body.ip_address
-  });
-
-  io.emit('send_available_devices', {'username': req.body.username, 'devices': device_no, 'ip_address': req.body.ip_address});
-});
-
-/* This post endpoint to enable user to print a document on their side */
-app.post('/print', (req, res) => {
-  const fileName = req.files.inpFile.name
-
-  if (typeof fileName !== 'undefined') {
-    console.log(fileName);
-
-
-  }
-
-  // res.send("File has been sent");
-});
-
 /* POST request with meeting details and response with zoom signature */
 app.post('/zoom_sign', (req, res) => {
-  
+
   //zoom websdk signature example was updated 5 days back
   //https://github.com/zoom/websdk-sample-signature-node.js/commit/7908e9da02cea12a969c792686565f746882f462
   const timestamp = new Date().getTime()-30000;
@@ -131,7 +104,6 @@ app.get('/meeting_logs', db.getAllMeetingLogs)
 app.get('/meeting_active_logs', db.getActiveMeetingLogs)
 app.get('/meeting_log/:user_name/:meeting_number', db.getMeetingLog)
 app.post('/meeting_log', db.createMeetingLog)
-app.post('/meeting', db.createMeeting)
 app.delete('/meeting_log/:meeting_number', db.deleteMeetingLog)
 
 //#endregion
@@ -153,27 +125,25 @@ app.delete('/meeting_log/:meeting_number', db.deleteMeetingLog)
         for(room in users_in_room){
           for(socket_id in users_in_room[room]){
             if(socket_id == socket['id']){
-              //update database meeting logs here when a member leaves
+
+              //update database meeting logs here
               console.log(db.updateMeetingLog(users_in_room[room][socket_id],room));
 
               delete users_in_room[room][socket_id]
               io.to(room).emit('room_leave_event',{'message':'left room '+room, 'users_in_room':Object.values(users_in_room[room]), 'room':room});
-
-              // end the meeting if nobody is left
-              if (Object.entries(users_in_room[room]).length === 0) {
-                console.log(db.endMeeting(room));
-              }
-
               break
             }
           }
+          if(socket_id == socket['id']){
+            break
+          }
         }
-        
+
       });
       //Listen for set_room event from client
 
       socket.on('set_room',function(obj){
-        console.log('Room name: '+obj['room']+' for username: '+obj['username']);
+        console.log('Room name: '+obj['room']+' for username: '+obj['username'])
         socket.join(obj['room']);
         if(users_in_room[obj['room']] == null){
           users_in_room[obj['room']] = {}
@@ -187,7 +157,7 @@ app.delete('/meeting_log/:meeting_number', db.deleteMeetingLog)
           for(var user_socket in users_in_room[obj['room']]){
             if(users_in_room[obj['room']][user_socket] == obj['to_username']){
               console.log('Message "'+obj['message']+'" sent to user:'+users_in_room[obj['room']][user_socket]);
-              io.to(user_socket).emit('recieved_private_message',obj['message']);  
+              io.to(user_socket).emit('recieved_private_message',obj['message']);
             }
           }
         }
@@ -196,12 +166,46 @@ app.delete('/meeting_log/:meeting_number', db.deleteMeetingLog)
           console.log(msg);
           io.to(socket['id']).emit('recieved_private_message',msg);
         }
-        
+
       });
 
   });
 
-//#endregion
+app.post('/upload', async (req, res) => {
+    try {
+        if(!req.files) {
+            res.send({
+                status: false,
+                message: 'No file uploaded'
+            });
+        } else {
+            //Use the name of the input field (i.e. "avatar") to retrieve the uploaded file
+            let avatar = req.files.avatar;
+
+            // Gets date in yyyy-mm-dd format
+            let date = (new Date()).toISOString().split('T')[0];
+            console.log('/uploads/' + date + '/' + avatar.name);
+            //Use the mv() method to place the file in upload directory and then by date
+            avatar.mv('./uploads/' + date + '/' + avatar.name);
+
+            // Emit file metadata
+            io.sockets.emit('clientEvent', {
+                name: avatar.name,
+                mimetype: avatar.mimetype,
+                size: avatar.size
+            });
+        }
+    } catch (err) {
+        res.status(500).send(err);
+    }
+});
+
+io.on('connection', function (socket) {
+    console.log('connected:', socket.client.id);
+    socket.on('serverEvent', function (data) {
+        console.log('new message from client:', data);
+    });
+});
 
 // Serve the files on PORT.
 http.listen(PORT, function () {
