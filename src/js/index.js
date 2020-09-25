@@ -270,46 +270,14 @@ var observer = new MutationObserver(function (mutations) {
     console.log("mutation spotted");
     mutations.forEach(function (mutation) {
         if (mutation.addedNodes.length) {
-            console.log('Added');
-            console.log(users_in_room);
-            console.log(users_in_room.length)
             var counter;
             for (counter = 1; counter < users_in_room.length; counter++) {
-                // let aElement = $('<li role=\'presentation\' class=\'injected\'><a role=\'menuitem\' tabindex=\'-1\' href\'#\'>Projector</a></li>');
                 let aElement = $('<form method=\'post\' action=\'upload\' enctype=\'multipart/form-data\'><input type=\'file\' name=\'avatar\'><input type=\'submit\'></form>');
-
                 let node = document.getElementById('participants-list-1');
-
                 $(aElement).attr( {
                     id: counter
                 });
-
                 $(aElement).appendTo(node);
-
-                // $(aElement).appendTo(node.children[1].children[0].children[1].children[1]);
-
-                /* var pid = users_in_room[counter];
-                console.log(pid); */
-
-                /* Add click functionality to each element */
-                /* $('#' + pid).on('click', function() {
-                    $('#' + pid).css('cursor', 'pointer');
-                    var obj = {'to_username': pid, 'message':'projector do something', 'room': parseInt(document.getElementById('meeting_number').value, 10)};
-                    console.log(obj);
-                    researcher_trigger_event(obj);
-                }); */
-
-            }
-
-            if ($('.injected').length) {
-                console.log('Element successfully injected!');
-
-                $('.injected').on('click', function() {
-                    let pid = $(this).attr('id');
-                    console.log(pid);
-                    let obj = {'to_username': users_in_room[parseInt(pid)], 'message':'projector do something', 'room': parseInt(document.getElementById('meeting_number').value, 10)};
-                    researcher_trigger_event(obj);
-                });
             }
         }
         if (mutation.removedNodes.length) {
