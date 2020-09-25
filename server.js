@@ -127,7 +127,7 @@ app.delete('/meeting_log/:meeting_number', db.deleteMeetingLog)
             if(socket_id == socket['id']){
 
               //update database meeting logs here
-              console.log(db.updateMeetingLogEndedServer(users_in_room[room][socket_id],room));
+              console.log(db.updateMeetingLog(users_in_room[room][socket_id],room));
 
               delete users_in_room[room][socket_id]
               io.to(room).emit('room_leave_event',{'message':'left room '+room, 'users_in_room':Object.values(users_in_room[room]), 'room':room});
