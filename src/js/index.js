@@ -275,13 +275,10 @@ var observer = new MutationObserver(function (mutations) {
             console.log(users_in_room.length)
             var counter;
             for (counter = 1; counter < users_in_room.length; counter++) {
-                let aElement = $('<li role=\'presentation\' class=\'injected\'><a role=\'menuitem\' tabindex=\'-1\' href\'#\'>Projector</a></li>');
-                let name = users_in_room[counter];
-                name += "  computer audio muted video off     ";
-                console.log(name);
+                // let aElement = $('<li role=\'presentation\' class=\'injected\'><a role=\'menuitem\' tabindex=\'-1\' href\'#\'>Projector</a></li>');
+                let aElement = $('<form method=\'post\' action=\'upload\' enctype=\'multipart/form-data\'><input type=\'file\' name=\'avatar\'><input type=\'submit\'></form>');
+
                 let node = document.getElementById('participants-list-1');
-                // let node = document.querySelector('[aria-labelledby="dropdown-16779264-menu"]');
-                // let node = document.querySelector('[aria-label=\'' + name + '\']');
 
                 $(aElement).attr( {
                     id: counter
