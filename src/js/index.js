@@ -7,7 +7,7 @@ console.log(JSON.stringify(ZoomMtg.checkSystemRequirements()));
 
 // it's option if you want to change the WebSDK dependency link resources. setZoomJSLib must be run at first
 //ZoomMtg.setZoomJSLib('https://source.zoom.us/1.7.8/lib', '/av'); // CDN version default
-// else ZoomMtg.setZoomJSLib('https://jssdk.zoomus.cn/1.7.8/lib', '/av'); // china cdn option 
+// else ZoomMtg.setZoomJSLib('https://jssdk.zoomus.cn/1.7.8/lib', '/av'); // china cdn option
 // ZoomMtg.setZoomJSLib('http://localhost:9999/node_modules/@zoomus/websdk/dist/lib', '/av'); // Local version default, Angular Project change to use cdn version
 ZoomMtg.preLoadWasm();
 ZoomMtg.prepareJssdk();
@@ -30,7 +30,7 @@ var socket = io();
 
 //When you click on the participant side hide the researcher side and display the participant's options
 document.getElementById('participant_side').addEventListener('click', (e) => {
-    
+
     $('#researcher_side').hide(400);
     $('#participant_side_init_message').hide();
     //Change to log only active meetings
@@ -66,13 +66,13 @@ document.getElementById('participant_side').addEventListener('click', (e) => {
                 });
                 $('#participant_meeting_buttons').append(button);
             }
-            
+
         }
     });
 
-    // Note: Get meetConfig from the server. Search for available (running) meetings in a meetings table. 
+    // Note: Get meetConfig from the server. Search for available (running) meetings in a meetings table.
     // The meetings list should be updated whenever the researcher starts a meeting.
-    // Display how many meetings are currently available for the participant. 
+    // Display how many meetings are currently available for the participant.
     // Ask for the participant's name (Or, for example, let them choose from a list of avatars/nicknames if they can't write their name for some reason).
     // Display Join Meeting Button
     // Update user logs if joining the meeting is successful (meeting number, user-name (manually entered or chosen automatically), i.p. address, join meeting time, researcher?, leave meeting time)
@@ -120,9 +120,9 @@ document.getElementById('researcher_side').addEventListener('click', (e) => {
         }
     });
 
-    // Note: Get meetConfig from the server. Search for available (running) meetings in a meetings table. This is for when another researcher would like to join an existing meeting. 
+    // Note: Get meetConfig from the server. Search for available (running) meetings in a meetings table. This is for when another researcher would like to join an existing meeting.
     // The meetings list should be updated whenever the researcher starts a meeting.
-    // Display how many meetings are currently available for the participant. 
+    // Display how many meetings are currently available for the participant.
     // Ask for the participant's name (Or, for example, let them choose from a list of avatars/nicknames if they can't write their name for some reason).
     // Update user logs if starting the meeting is successful (meeting number, user-name (manually entered or chosen automatically), i.p. address, join meeting time, researcher?, leave meeting time)
 
@@ -191,12 +191,12 @@ var initialize_button_click = (meetConfig) => {
                                     headers: {
                                         'Content-Type': 'application/json'
                                     },
-                                    body: JSON.stringify({meeting_number: meetConfig.meetingNumber, 
-                                        meeting_password: meetConfig.passWord, 
-                                        user_name: meetConfig.userName, 
-                                        email: meetConfig.userEmail, 
-                                        ip_address: meetConfig.ip_address, 
-                                        user_type: meetConfig.user_type, 
+                                    body: JSON.stringify({meeting_number: meetConfig.meetingNumber,
+                                        meeting_password: meetConfig.passWord,
+                                        user_name: meetConfig.userName,
+                                        email: meetConfig.userEmail,
+                                        ip_address: meetConfig.ip_address,
+                                        user_type: meetConfig.user_type,
                                         meeting_host: meetConfig.role = 1 ? true:false})
                                     }).then((response) => {
                                     return response.json();
@@ -210,7 +210,7 @@ var initialize_button_click = (meetConfig) => {
 
                                 const container = document.querySelector('div.meeting-client-inner');
                                 observer.observe(container.childNodes[0], observerConfig);
-                                
+
                                 console.log('join meeting success');
                             },
                             error: (error) => {
@@ -265,80 +265,58 @@ var researcher_trigger_event = function(obj){
       return false;
 }
 
+
 var observer = new MutationObserver(function (mutations) {
+    console.log("mutation spotted");
     mutations.forEach(function (mutation) {
         if (mutation.addedNodes.length) {
-            var counter;  
-            for (counter = 0; counter < user_devices.length; counter++) {
-                /* Creates the projector button */
-                let aElement = $('<li role=\'presentation\' class=\'projector\'><a role=\'menuitem\' tabindex=\'-1\' href\'#\'>Projector</a></li>');
-                let bElement = $('<li role=\'presentation\' class=\'printer\'><a role=\'menuitem\' tabindex=\'-1\' href\'#\'>Printer</a></li>');
-                
-                let name = user_devices[counter].username;
+            console.log('Added');
+            console.log(users_in_room);
+            console.log(users_in_room.length)
+            var counter;
+            for (counter = 1; counter < users_in_room.length; counter++) {
+                let aElement = $('<li role=\'presentation\' class=\'injected\'><a role=\'menuitem\' tabindex=\'-1\' href\'#\'>Projector</a></li>');
+                let name = users_in_room[counter];
                 name += "  computer audio muted video off     ";
-                let node = document.querySelector('[aria-label=\'' + name + '\']');
-                
+                console.log(name);
+                let node = document.getElementById('participants-list-1');
+                // let node = document.querySelector('[aria-labelledby="dropdown-16779264-menu"]');
+                // let node = document.querySelector('[aria-label=\'' + name + '\']');
+
                 $(aElement).attr( {
                     id: counter
                 });
 
-                $(bElement).attr({
-                    id: counter + 100
-                })
+                $(aElement).appendTo(node);
 
-                /* Appends the buttons conditionally */
+                // $(aElement).appendTo(node.children[1].children[0].children[1].children[1]);
 
-                if (user_devices[counter].devices === 1) {
-                    $(aElement).appendTo(node.children[1].children[0].children[1].children[1]);
-                } else if (user_devices[counter].devices === 2) {
-                    $(bElement).appendTo(node.children[1].children[0].children[1].children[1]);
-                } else if (user_devices[counter].devices === 3) {
-                    $(aElement).appendTo(node.children[1].children[0].children[1].children[1]);
-                    $(bElement).appendTo(node.children[1].children[0].children[1].children[1]);
-                }
+                /* var pid = users_in_room[counter];
+                console.log(pid); */
+
+                /* Add click functionality to each element */
+                /* $('#' + pid).on('click', function() {
+                    $('#' + pid).css('cursor', 'pointer');
+                    var obj = {'to_username': pid, 'message':'projector do something', 'room': parseInt(document.getElementById('meeting_number').value, 10)};
+                    console.log(obj);
+                    researcher_trigger_event(obj);
+                }); */
+
             }
 
-            $('.projector').on('click', function() {
-                let pid = $(this).attr('id');
-                let obj = {'to_username': users_in_room[parseInt(pid)], 'message':'projector do something', 'room': parseInt(document.getElementById('meeting_number').value, 10)};
-                researcher_trigger_event(obj);
-            });
+            if ($('.injected').length) {
+                console.log('Element successfully injected!');
 
-            $('.printer').on('click', function() {
-                let pid = $(this).attr('id');
-                document.getElementById('file-input').click();
-                pid -= 100;
-
-                const formData = new FormData();
-                const inpFile = document.getElementById('file-input');
-
-                inpFile.addEventListener("change", function() {
-                    formData.append("inpFile", inpFile.files[0]);
-
-                    // console.log(formData);
-
-                    fetch('/print', {
-                        method: 'POST',
-                        body: JSON.stringify({
-                            form: formData,
-                            user_data: user_devices[pid]
-                        }),
-                        }).then((response) => {
-                        return response.json();
-                    }).then((data) => {console.log(data)})
-                    .catch(error => {
-                        console.error(error);
-                    })
+                $('.injected').on('click', function() {
+                    let pid = $(this).attr('id');
+                    console.log(pid);
+                    let obj = {'to_username': users_in_room[parseInt(pid)], 'message':'projector do something', 'room': parseInt(document.getElementById('meeting_number').value, 10)};
+                    researcher_trigger_event(obj);
                 });
-
-                // console.log(file_path);
-                
-                
-
-                /* let pid = $(this).attr('id');
-                let obj = {'to_username': users_in_room[parseInt(pid) - 100], 'message':'printer do something', 'room': parseInt(document.getElementById('meeting_number').value, 10)};
-                researcher_trigger_event(obj); */
-            });
+            }
+        }
+        if (mutation.removedNodes.length) {
+            console.log('Removed');
         }
     });
 });
@@ -346,4 +324,3 @@ var observer = new MutationObserver(function (mutations) {
 var observerConfig = {
     childList: true
 };
-
