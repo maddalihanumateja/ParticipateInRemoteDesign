@@ -1,6 +1,8 @@
 # About the Project #
 The objective of this project is to create an enhanced video conferencing environment for remote participatory design. The video conferencing environment should be able to interface with different devices in the user's vicinity (e.g. printers, projectors).
 
+![image](https://user-images.githubusercontent.com/3580069/90793085-49abd500-e2d9-11ea-8433-058b78f9fe47.png)
+
 # Installation Instructions #
 - Installed node js latest version from [nodejs.org](https://nodejs.org/en/download/)
 - Install postgres SQL from [postgresql.org](https://www.postgresql.org/download/). If using Homebrew on macOS, simply run `brew install postresql` to install and then `brew services start postgresql` to get it up and running. Make sure you can connect to the postgres server by using the `psql` command in cmd, powershell, or terminal. If not, make sure the path to the postgres binaries is in your system PATH environment variable.

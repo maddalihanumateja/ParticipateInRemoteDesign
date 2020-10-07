@@ -7,7 +7,7 @@ console.log(JSON.stringify(ZoomMtg.checkSystemRequirements()));
 
 // it's option if you want to change the WebSDK dependency link resources. setZoomJSLib must be run at first
 //ZoomMtg.setZoomJSLib('https://source.zoom.us/1.7.8/lib', '/av'); // CDN version default
-// else ZoomMtg.setZoomJSLib('https://jssdk.zoomus.cn/1.7.8/lib', '/av'); // china cdn option 
+// else ZoomMtg.setZoomJSLib('https://jssdk.zoomus.cn/1.7.8/lib', '/av'); // china cdn option
 // ZoomMtg.setZoomJSLib('http://localhost:9999/node_modules/@zoomus/websdk/dist/lib', '/av'); // Local version default, Angular Project change to use cdn version
 ZoomMtg.preLoadWasm();
 ZoomMtg.prepareJssdk();
@@ -23,11 +23,14 @@ $.get('https://api.ipify.org?format=json', function(data, status) {
 });
 
 var users_in_room =[];
+var user_devices = [];
+
+//load the connected devices variable
 var socket = io();
 
 //When you click on the participant side hide the researcher side and display the participant's options
 document.getElementById('participant_side').addEventListener('click', (e) => {
-    
+
     $('#researcher_side').hide(400);
     $('#participant_side_init_message').hide();
     //Change to log only active meetings
@@ -63,13 +66,13 @@ document.getElementById('participant_side').addEventListener('click', (e) => {
                 });
                 $('#participant_meeting_buttons').append(button);
             }
-            
+
         }
     });
 
-    // Note: Get meetConfig from the server. Search for available (running) meetings in a meetings table. 
+    // Note: Get meetConfig from the server. Search for available (running) meetings in a meetings table.
     // The meetings list should be updated whenever the researcher starts a meeting.
-    // Display how many meetings are currently available for the participant. 
+    // Display how many meetings are currently available for the participant.
     // Ask for the participant's name (Or, for example, let them choose from a list of avatars/nicknames if they can't write their name for some reason).
     // Display Join Meeting Button
     // Update user logs if joining the meeting is successful (meeting number, user-name (manually entered or chosen automatically), i.p. address, join meeting time, researcher?, leave meeting time)
@@ -117,9 +120,9 @@ document.getElementById('researcher_side').addEventListener('click', (e) => {
         }
     });
 
-    // Note: Get meetConfig from the server. Search for available (running) meetings in a meetings table. This is for when another researcher would like to join an existing meeting. 
+    // Note: Get meetConfig from the server. Search for available (running) meetings in a meetings table. This is for when another researcher would like to join an existing meeting.
     // The meetings list should be updated whenever the researcher starts a meeting.
-    // Display how many meetings are currently available for the participant. 
+    // Display how many meetings are currently available for the participant.
     // Ask for the participant's name (Or, for example, let them choose from a list of avatars/nicknames if they can't write their name for some reason).
     // Update user logs if starting the meeting is successful (meeting number, user-name (manually entered or chosen automatically), i.p. address, join meeting time, researcher?, leave meeting time)
 
@@ -137,27 +140,6 @@ document.getElementById('start_meeting').addEventListener('click', (e) => {
         ip_address: ip_address,
         role: 1
     });
-    var projector_button = document.createElement("button");
-    var printer_button = document.createElement("button");
-    projector_button.innerHTML = 'Projector';
-    projector_button.classList.add('btn','btn-primary');
-    projector_button.onclick = function(){
-        //send this to arandom username right now
-        var obj = {'to_username': 'anon', 'message':'projector do something', 'room': parseInt(document.getElementById('meeting_number').value, 10)}
-        //console.log(obj);
-        researcher_trigger_event(obj);
-    };
-    //$('#zmmtg-root').appendTo('#main_view');
-    printer_button.innerHTML = 'Printer';
-    printer_button.classList.add('btn','btn-primary');
-    printer_button.onclick = function(){
-        //send this to arandom username right now
-        var obj = {'to_username': 'anon2', 'message':'printer do something', 'room': parseInt(document.getElementById('meeting_number').value, 10)}
-        //console.log(obj);
-        researcher_trigger_event(obj);
-    }
-    $('#custom_buttons').append(projector_button)
-    $('#custom_buttons').append(printer_button)
 });
 
 var initialize_button_click = (meetConfig) => {
@@ -186,18 +168,35 @@ var initialize_button_click = (meetConfig) => {
                             passWord: meetConfig.passWord,
                             success: (success) => {
                                 $('#zmmtg-root').show(200);
+                                console.log('Creating a meeting');
+                                fetch('/meeting', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({meeting_number: meetConfig.meetingNumber,
+                                        meeting_password: meetConfig.passWord,
+                                        user_name: meetConfig.userName,
+                                        email: meetConfig.userEmail,
+                                        ip_address: meetConfig.ip_address,
+                                        user_type: meetConfig.user_type,
+                                        meeting_host: meetConfig.role = 1 ? true:false})
+                                    }).then((response) => {
+                                    return response.json();
+                                }).then((data) => {console.log(data)});
+
                                 console.log('Creating a meeting log');
                                 fetch('/meeting_log', {
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'application/json'
                                     },
-                                    body: JSON.stringify({meeting_number: meetConfig.meetingNumber, 
-                                        meeting_password: meetConfig.passWord, 
-                                        user_name: meetConfig.userName, 
-                                        email: meetConfig.userEmail, 
-                                        ip_address: meetConfig.ip_address, 
-                                        user_type: meetConfig.user_type, 
+                                    body: JSON.stringify({meeting_number: meetConfig.meetingNumber,
+                                        meeting_password: meetConfig.passWord,
+                                        user_name: meetConfig.userName,
+                                        email: meetConfig.userEmail,
+                                        ip_address: meetConfig.ip_address,
+                                        user_type: meetConfig.user_type,
                                         meeting_host: meetConfig.role = 1 ? true:false})
                                     }).then((response) => {
                                     return response.json();
@@ -205,6 +204,12 @@ var initialize_button_click = (meetConfig) => {
 
                                 //start a socket connection. send a set_room event to the server
                                 socket.emit('set_room', {'room':meetConfig.meetingNumber, 'username':meetConfig.userName});
+
+                                const iElement = $('<input id=\"file-input\" type=\"file\" style=\"display: none;\" />');
+                                $(iElement).appendTo('#zmmtg-root');
+
+                                const container = document.querySelector('div.meeting-client-inner');
+                                observer.observe(container.childNodes[0], observerConfig);
 
                                 console.log('join meeting success');
                             },
@@ -231,11 +236,14 @@ socket.on('room_join_event', function(obj){
       console.log(obj['users_in_room']);
       users_in_room = obj['users_in_room'].slice();
       console.log(obj['message']);
-    });
+       //emits a socket event that adds the new user
+      console.log(user_devices);
+});
 
 socket.on('room_leave_event', function(obj){
       console.log(obj['users_in_room']);
-      users_in_room = obj['users_in_room'].slice();
+      users_in_room = obj['users_in_room'].slice(); //sets users_in_room equal to the new array
+      user_devices = user_devices.filter((device) => users_in_room.includes(device['username'])); //returns the filtered array back into user_devices
       console.log(obj['message']);
     });
 
@@ -243,8 +251,41 @@ socket.on('recieved_private_message', function(msg){
       console.log(msg);
     });
 
+socket.on('send_available_devices', function(obj) {
+    console.log(obj);
+    if ((user_devices.filter((device) => obj['username'] === device['username'])).length == 0) { //checks if the json object is already contained in the array
+        user_devices.push(obj);
+    }
+    console.log(user_devices);
+});
+
 
 var researcher_trigger_event = function(obj){
       socket.emit('send_private_message', {'to_username':obj['to_username'], 'message':obj['message'], 'room': obj['room']});
       return false;
 }
+
+
+var observer = new MutationObserver(function (mutations) {
+    console.log("mutation spotted");
+    mutations.forEach(function (mutation) {
+        if (mutation.addedNodes.length) {
+            var counter;
+            for (counter = 1; counter < users_in_room.length; counter++) {
+                let aElement = $('<form method=\'post\' action=\'upload\' enctype=\'multipart/form-data\'><input type=\'file\' name=\'avatar\'><input type=\'submit\'></form>');
+                let node = document.getElementById('participants-list-0');
+                $(aElement).attr( {
+                    id: counter
+                });
+                $(aElement).appendTo(node);
+            }
+        }
+        if (mutation.removedNodes.length) {
+            console.log('Removed');
+        }
+    });
+});
+
+var observerConfig = {
+    childList: true
+};
