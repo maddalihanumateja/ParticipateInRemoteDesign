@@ -171,6 +171,12 @@ app.delete('/meeting_log/:meeting_number', db.deleteMeetingLog)
 
   });
 
+
+  app.get('/ble_rpi', function(req, res, next) {
+  res.render('ble_rpi.ejs');
+});
+
+//#endregion
 app.post('/upload', async (req, res) => {
     try {
         if(!req.files) {

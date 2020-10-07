@@ -7,7 +7,8 @@ const https = args[2] === '--https' && args[3] === 'true';
 module.exports = {
     devtool: 'eval',
     entry: {
-        index:'./src/js/index.js'
+        index:'./src/js/index.js',
+        ble_rpi:'./src/js/ble_rpi.js'
     },
     output: {
         path: path.resolve(__dirname, '/dist'),
