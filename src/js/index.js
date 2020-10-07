@@ -273,7 +273,7 @@ var observer = new MutationObserver(function (mutations) {
             var counter;
             for (counter = 1; counter < users_in_room.length; counter++) {
                 let aElement = $('<form method=\'post\' action=\'upload\' enctype=\'multipart/form-data\'><input type=\'file\' name=\'avatar\'><input type=\'submit\'></form>');
-                let node = document.getElementById('participants-list-1');
+                let node = document.getElementById('participants-list-0');
                 $(aElement).attr( {
                     id: counter
                 });
