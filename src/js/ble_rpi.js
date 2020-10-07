@@ -10,7 +10,7 @@ var deviceSelectBtn = document.getElementById("device-select-btn");
 var bluetoothDevice;
 var service;
 
-/* Functions required to encode string data to a byte stream when transmitting using BLE 
+/* Functions required to encode string data to a byte stream when transmitting using BLE
 and decode bytestreams back to strings when recieving BLE data
 */
 
@@ -27,7 +27,7 @@ function str2ab(str) {
   return buf;
 }
 
-/*Functions implementing BLE GATT client functions to connect to a server advertising a particular service, 
+/*Functions implementing BLE GATT client functions to connect to a server advertising a particular service,
 read, and write characteristics of the service on the server*/
 
 function requestDevice() {
@@ -72,7 +72,7 @@ function requestDevice() {
         });
       });
     });
-    
+
   });
 }
 
@@ -127,7 +127,7 @@ deviceSelectBtn.addEventListener("click", requestDevice);
 
 /*
 //Helper functions to recieve notifications on a characteristic that is time-varying
-// GATT server sends an event everytime the characteristic changes. 
+// GATT server sends an event everytime the characteristic changes.
 // The client handles these events by printing the current value to the console
 
 function handleCustomNotifyValueChanged(){

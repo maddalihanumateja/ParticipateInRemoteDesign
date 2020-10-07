@@ -105,6 +105,7 @@ app.get('/meeting_active_logs', db.getActiveMeetingLogs)
 app.get('/meeting_log/:user_name/:meeting_number', db.getMeetingLog)
 app.post('/meeting_log', db.createMeetingLog)
 app.delete('/meeting_log/:meeting_number', db.deleteMeetingLog)
+app.post('/meeting', db.createMeeting)
 
 //#endregion
 
