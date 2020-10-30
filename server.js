@@ -224,3 +224,8 @@ io.on('connection', function (socket) {
 http.listen(PORT, function () {
   console.log('Example app listening on port 5000!\n');
 });
+
+// Webhook endpoint for when someone joins the meeting
+app.post('/participant_joined', (req, res) => {
+  console.log(req.body['payload'].object.participant['user_id'] + " has joined the meeting.");
+})
