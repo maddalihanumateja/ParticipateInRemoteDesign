@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<head>
+    <title>ParticipateInRemoteDesign</title>
+    <meta charset="utf-8" />
+    <link type="text/css" rel="stylesheet" href="node_modules/@zoomus/websdk/dist/css/bootstrap.css" />
+    <link type="text/css" rel="stylesheet" href="node_modules/@zoomus/websdk/dist/css/react-select.css" />
+
+    <meta name="format-detection" content="telephone=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+</head>
+<body>
+<%- include('navbar') %>
+<div class="container-fluid">
+  <div class="row" id="main_view">
+  	<%- include('participant_side') %>
+  	<%- include('researcher_side') %>
+  </div>
+  <div class="row" id="custom_buttons">
+
+  </div>
+</div>
+
+<script src="node_modules/react/umd/react.production.min.js"></script>
+<script src="node_modules/react-dom/umd/react-dom.production.min.js"></script>
+<script src="node_modules/redux/dist/redux.min.js"></script>
+<script src="node_modules/redux-thunk/dist/redux-thunk.min.js"></script>
+<script src="node_modules/lodash/lodash.min.js"></script>
+<script src="node_modules/jquery/dist/jquery.min.js"></script>
+
+<script src="../dist/index.min.js"></script>
+
+<script>
+document.getElementById("participant_side").click();
+
+window.onload = function() {
+  setTimeout(myFunc, 1000);
+}
+var myFunc = function() {
+  var person = prompt("Please enter your name", "");
+  document.getElementById("participant_display_name").value = person;
+  document.getElementById("pjoin_mtg_1").click();
+}
+</script>
+</body>
+</html>

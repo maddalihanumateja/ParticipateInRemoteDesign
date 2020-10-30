@@ -175,7 +175,11 @@ app.post('/meeting', db.createMeeting)
 
   app.get('/ble_rpi', function(req, res, next) {
   res.render('ble_rpi.ejs');
-});
+  });
+
+  app.get('/participant', function(req, res, next) {
+  res.render('participant.ejs');
+  });
 
 //#endregion
 app.post('/upload', async (req, res) => {
