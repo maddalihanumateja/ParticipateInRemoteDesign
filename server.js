@@ -105,6 +105,7 @@ app.get('/meeting_active_logs', db.getActiveMeetingLogs)
 app.get('/meeting_log/:user_name/:meeting_number', db.getMeetingLog)
 app.post('/meeting_log', db.createMeetingLog)
 app.delete('/meeting_log/:meeting_number', db.deleteMeetingLog)
+app.post('/meeting', db.createMeeting)
 
 //#endregion
 
@@ -172,9 +173,15 @@ app.delete('/meeting_log/:meeting_number', db.deleteMeetingLog)
   });
 
 
+  // Endpoint for Bluetooth link
   app.get('/ble_rpi', function(req, res, next) {
-  res.render('ble_rpi.ejs');
-});
+    res.render('ble_rpi.ejs');
+  });
+
+  // Endpoint for server invite link
+  app.get('/participant', function(req, res, next) {
+    res.render('participant.ejs');
+  });
 
 //#endregion
 app.post('/upload', async (req, res) => {
@@ -217,3 +224,8 @@ io.on('connection', function (socket) {
 http.listen(PORT, function () {
   console.log('Example app listening on port 5000!\n');
 });
+
+// Webhook endpoint for when someone joins the meeting
+app.post('/participant_joined', (req, res) => {
+  console.log(req.body['payload'].object.participant['user_id'] + " has joined the meeting.");
+})

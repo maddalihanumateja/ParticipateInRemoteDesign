@@ -76,15 +76,19 @@ const getOtherUsersForMeeting = (request, response) => {
 const createMeeting = (request, response) => {
   const meeting_number = request.body.meeting_number;
   const meeting_password = request.body.meeting_password;
+  console.log(request.body.user_type);
+  if (request.body.user_type != 'participant') {
+    pool.query('INSERT INTO meetings (meeting_number, meeting_password, meeting_ended) values ($1, $2, $3)',
+     [meeting_number, meeting_password, false], (error, results) => {
+      if (error) {
+        console.log(request);
+        throw error
+      }
+      response.status(201).send(`Meeting created with ID: ${results.insertId}`)
+    })
+  }
 
-  pool.query('INSERT INTO meetings (meeting_number, meeting_password, meeting_ended) values ($1, $2, $3)',
-   [meeting_number, meeting_password, false], (error, results) => {
-    if (error) {
-      console.log(request);
-      throw error
-    }
-    response.status(201).send(`Meeting created with ID: ${results.insertId}`)
-  })
+
 }
 
 const createMeetingLog = (request, response) => {
@@ -108,18 +112,18 @@ const createMeetingLog = (request, response) => {
   })
 
   //add log data to logs table
-  pool.query(`INSERT INTO logs (meeting_id, meeting_join_time, meeting_leave_time, meeting_host, user_id)
-    SELECT
-      (SELECT max(meeting_id) from meetings WHERE meeting_number = $1),
-      $2, $3, $4,
-      (SELECT user_id FROM users WHERE user_name = $5 AND user_email = $6);`,
-      [meeting_number, new Date(), null, meeting_host, user_name, email], (error, results) => {
-    if (error) {
-      console.log(request);
-      throw error
-    }
-    response.status(201).send(`Meeting Log added with ID: ${results.insertId}`)
-  })
+  // pool.query(`INSERT INTO logs (meeting_id, meeting_join_time, meeting_leave_time, meeting_host, user_id)
+  //   SELECT
+  //     (SELECT max(meeting_id) from meetings WHERE meeting_number = $1),
+  //     $2, $3, $4,
+  //     (SELECT user_id FROM users WHERE user_name = $5 AND user_email = $6);`,
+  //     [meeting_number, new Date(), null, meeting_host, user_name, email], (error, results) => {
+  //   if (error) {
+  //     console.log(request);
+  //     throw error
+  //   }
+  //   response.status(201).send(`Meeting Log added with ID: ${results.insertId}`)
+  // })
 
 }
 
@@ -133,7 +137,7 @@ const updateMeetingLog = (user_name, meeting_num) => {
         LEFT JOIN users ON logs.user_id = users.user_id
         LEFT JOIN meetings ON logs.meeting_id = meetings.meeting_id
         WHERE user_name = $1 AND meeting_number = $2 ORDER BY meeting_join_time DESC LIMIT 1)
-    UPDATE logs set meeting_leave_time = $3 WHERE user_id = (SELECT user_id from users where user_name = $1)
+    UPDATE logs set meeting_leave_time = $3 WHERE user_id = (SELECT user_id from users where user_name = $1 limit 1)
      AND meeting_leave_time IS NULL;`,
     [user_name, meeting_number, new Date()],
     (error, results) => {
