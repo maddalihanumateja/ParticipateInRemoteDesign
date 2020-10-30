@@ -173,12 +173,14 @@ app.post('/meeting', db.createMeeting)
   });
 
 
+  // Endpoint for Bluetooth link
   app.get('/ble_rpi', function(req, res, next) {
-  res.render('ble_rpi.ejs');
+    res.render('ble_rpi.ejs');
   });
 
+  // Endpoint for server invite link
   app.get('/participant', function(req, res, next) {
-  res.render('participant.ejs');
+    res.render('participant.ejs');
   });
 
 //#endregion
