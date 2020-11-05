@@ -1,5 +1,5 @@
 # About the Project #
-The objective of this project is to create an enhanced video conferencing environment for remote participatory design. The video conferencing environment should be able to interface with different devices in the user's vicinity (e.g. printers, projectors).
+The objective of this project is to create an enhanced video conferencing environment for remote participatory design. The video conferencing environment should be able to interface with different devices in the user's vicinity (e.g. printers, projectors). Please refer to our [CSCW20 Poster](https://doi.org/10.1145/3406865.3418316) for more information.
 
 ![image](https://user-images.githubusercontent.com/3580069/90793085-49abd500-e2d9-11ea-8433-058b78f9fe47.png)
 
@@ -23,3 +23,6 @@ The objective of this project is to create an enhanced video conferencing enviro
 - Webpack's [Getting Started](https://webpack.js.org/guides/getting-started/) Docs. Zoom's sample code used webpack as the bundler. Going through the getting started docs will give you an idea of what a bundler does and why that's useful. Its almost another tutorial for how to build an app using NodeJS and webpack.
 - Connecting to a database with NodeJS: I'm using postgres (referring this [tutorial](https://blog.logrocket.com/setting-up-a-restful-api-with-node-js-and-postgresql-d96d6fc892d8/)) instead of a NoSQL db like mongodb. I'm familiar with both. Chose postgres randomly.
 - Creating rooms for users using [socket.io](https://socket.io/docs/rooms-and-namespaces/): I'm using this to allow a user trigger events on another user's browser.
+
+# Related Publications #
+ - Hanuma Teja Maddali, Emma Dixon, Alisha Pradhan, and Amanda Lazar. 2020. Supporting Remote Participation when Designing with People with Dementia. In <i>Conference Companion Publication of the 2020 on Computer Supported Cooperative Work and Social Computing</i> (<i>CSCW '20 Companion</i>). Association for Computing Machinery, New York, NY, USA, 335–340. DOI:https://doi.org/10.1145/3406865.3418316
