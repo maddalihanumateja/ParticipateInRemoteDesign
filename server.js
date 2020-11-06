@@ -132,6 +132,12 @@ app.post('/meeting', db.createMeeting)
 
               delete users_in_room[room][socket_id]
               io.to(room).emit('room_leave_event',{'message':'left room '+room, 'users_in_room':Object.values(users_in_room[room]), 'room':room});
+
+              // end the meeting if nobody is left
+              if (Object.entries(users_in_room[room]).length === 0) {
+                console.log(db.endMeeting(room));
+              }
+              
               break
             }
           }
