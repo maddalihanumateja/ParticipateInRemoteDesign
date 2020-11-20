@@ -38,6 +38,8 @@ var connected_users = {};
 //Objects storing users in a specific meeting room
 var users_in_room = {};
 
+var device = "";
+
 // Tell express to use the webpack-dev-middleware and use the webpack.config.js
 // configuration file as a base.
 app.use(webpackDevMiddleware(compiler, {
@@ -118,6 +120,9 @@ app.post('/meeting', db.createMeeting)
       console.log('socket-id "'+socket['id']+'" connected');
       connected_users[socket['id']] = {};//Maybe include the list of devices this client is connected to
 
+      socket.on('message', data => {
+        device = data;
+      });
 
       socket.on('disconnect', function(){
         console.log('socket-id "'+socket['id']+'" disconnected');
@@ -133,12 +138,12 @@ app.post('/meeting', db.createMeeting)
               delete users_in_room[room][socket_id]
               io.to(room).emit('room_leave_event',{'message':'left room '+room, 'users_in_room':Object.values(users_in_room[room]), 'room':room});
 
-              // end the meeting if nobody is left
+	// end the meeting if nobody is left
               if (Object.entries(users_in_room[room]).length === 0) {
                 console.log(db.endMeeting(room));
               }
-              
-              break
+
+		break
             }
           }
           if(socket_id == socket['id']){
@@ -229,6 +234,10 @@ io.on('connection', function (socket) {
 // Serve the files on PORT.
 http.listen(PORT, function () {
   console.log('Example app listening on port 5000!\n');
+});
+
+app.get('/devices.txt', (req, res) => {
+  res.send(device);
 });
 
 // Webhook endpoint for when someone joins the meeting
