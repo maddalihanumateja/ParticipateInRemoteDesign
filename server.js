@@ -17,8 +17,17 @@ var dotenv = require('dotenv').config({path: __dirname + '/.env'});
 
 //#region initialize variables and config
 const app = express();
-var http = require('http').createServer(app);
+var http = require('http').createServer(app)
+const fs = require("fs");
+
+if(true){
+  const key = fs.readFileSync("./https/key.pem");
+  const cert = fs.readFileSync("./https/cert.pem");
+  var http = require('https').createServer({key: key, cert: cert},app);
+}
+
 var io = require('socket.io')(http)
+
 const compiler = webpack(config);
 
 const fileUpload = require('express-fileupload');
