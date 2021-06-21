@@ -18,13 +18,6 @@ var dotenv = require('dotenv').config({path: __dirname + '/.env'});
 //#region initialize variables and config
 const app = express();
 var http = require('http').createServer(app)
-const fs = require("fs");
-
-if(false){
-  const key = fs.readFileSync("./https/key.pem");
-  const cert = fs.readFileSync("./https/cert.pem");
-  var http = require('https').createServer({key: key, cert: cert},app);
-}
 
 var io = require('socket.io')(http)
 
@@ -90,25 +83,8 @@ app.set('view engine', 'ejs');
 /* GET home page. */
 
 app.get('/', function(req, res, next) {
-	res.render('new_index.ejs');
+	res.render('webrtc_index.ejs');
 });
-
-/* POST request with meeting details and response with zoom signature */
-app.post('/zoom_sign', (req, res) => {
-
-  //zoom websdk signature example was updated 5 days back
-  //https://github.com/zoom/websdk-sample-signature-node.js/commit/7908e9da02cea12a969c792686565f746882f462
-  const timestamp = new Date().getTime()-30000;
-  const msg = Buffer.from(process.env.API_KEY + req.body.meetingNumber + timestamp + req.body.role).toString('base64');
-  const hash = crypto.createHmac('sha256', process.env.API_SECRET).update(msg).digest('base64');
-  const signature = Buffer.from(`${process.env.API_KEY}.${req.body.meetingNumber}.${timestamp}.${req.body.role}.${hash}`).toString('base64');
-
-  res.json({
-    signature: signature,
-    API_KEY: process.env.API_KEY
-  });
-  console.log("Sent response");
-})
 
 //#region all DB endpoints
 app.get('/meeting_logs', db.getAllMeetingLogs)
