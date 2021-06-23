@@ -1,8 +1,10 @@
 //#region requires
+const { v4: uuidv4 } = require('uuid');
 const express = require("express");
 const webpack = require('webpack');
 const path = require('path');
 const webpackDevMiddleware = require('webpack-dev-middleware');
+const querystring = require('querystring');
 
 const bodyParser = require('body-parser')
 const crypto = require('crypto');
@@ -24,7 +26,7 @@ var io = require('socket.io')(http)
 const compiler = webpack(config);
 
 const fileUpload = require('express-fileupload');
-const morgan = require('morgan');
+//const morgan = require('morgan');
 const _ = require('lodash');
 
 //Intialize DB and migrations
@@ -66,7 +68,7 @@ app.use(fileUpload({
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
-app.use(morgan('dev'));
+//app.use(morgan('dev'));
 
 // Make uploads directory static for file hosting
 app.use(express.static('uploads'));
@@ -78,6 +80,13 @@ app.set('view engine', 'ejs');
 
 //#endregion
 
+const { ExpressPeerServer } = require("peer");
+const peerServer = ExpressPeerServer(http, {
+  path:'/myapp',
+  debug: true,
+});
+app.use("/peerjs", peerServer);
+
 //#region router for all app endpoints
 
 /* GET home page. */
@@ -85,6 +94,37 @@ app.set('view engine', 'ejs');
 app.get('/', function(req, res, next) {
 	res.render('webrtc_index.ejs');
 });
+
+
+/* GET meeting room. */
+app.post("/room_create", (req, res) => {
+      console.log("Redirecting to room created with UUID: "+req.body.meeting_number);
+    res.redirect(301,'/room?'+querystring.stringify({UUID : req.body.meeting_number}));
+
+});
+
+/* GET meeting room. */
+app.get("/room", (req, res) => {
+    console.log("Rendering room with UUID: "+req.query.meeting_number);
+    res.render("room.ejs", { roomId: req.query.meeting_number, userName: req.query.user_name, userType : req.query.user_type, passWord: req.query.meeting_password});
+});
+
+/* POST request with meeting details and response with zoom signature */
+app.post('/webrtc_sign', (req, res) => {
+  const timestamp = new Date().getTime();
+  const meetingNumber = uuidv4();
+
+  /* Authenticate the user here and send a response. For example, if there is no meeting number then create a room with a random meeting number */
+
+  res.json({
+    meetingNumber: meetingNumber,
+    user_type : req.body.user_type,
+    passWord : req.body.passWord,
+    userName : req.body.userName,
+    userEmail : req.body.userEmail
+  });
+  console.log('Sent response');
+})
 
 //#region all DB endpoints
 app.get('/meeting_logs', db.getAllMeetingLogs)
@@ -142,11 +182,14 @@ app.post('/meeting', db.createMeeting)
       socket.on('set_room',function(obj){
         console.log('Room name: '+obj['room']+' for username: '+obj['username'])
         socket.join(obj['room']);
+        socket.on("message", (message) => {
+          io.to(obj['room']).emit("createMessage", message, obj['username']);
+        });
         if(users_in_room[obj['room']] == null){
           users_in_room[obj['room']] = {}
         }
         users_in_room[obj['room']][socket['id']] = obj['username']
-        io.to(obj['room']).emit('room_join_event',{'message':'joined room '+obj['room'], 'users_in_room':Object.values(users_in_room[obj['room']]), 'room':obj["room"]});
+        io.to(obj['room']).emit('room_join_event',{'new_peer_id':obj['id'],'new_username':obj['username'],'message':'joined room '+obj['room'], 'users_in_room':Object.values(users_in_room[obj['room']]), 'room':obj["room"]});
       });
 
       socket.on('send_private_message',function(obj){
