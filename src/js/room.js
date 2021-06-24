@@ -22,7 +22,20 @@ $.get("/devices.txt", function(data, status){
 
 // Other socket.io session events
 
+//start a socket connection. send a set_room event to the server
+socket.emit('set_room', {'room':ROOM_ID, 'username':USER_NAME});
 
+socket.on('room_join_event', function(obj){
+      console.log(obj['users_in_room']);
+      users_in_room = obj['users_in_room'].slice();
+      console.log(obj['message']);
+      if (users_in_room.length > 1) {
+        modal_append(users_in_room[users_in_room.length - 1]);
+      }
+      // connectToNewUser(obj['new_peer_id'], stream);
+       //emits a socket event that adds the new user
+      console.log(user_devices);
+});
 
 function modal_append(name) {
 
@@ -178,17 +191,6 @@ navigator.mediaDevices.getUserMedia({
       });
     });
 
-    socket.on('room_join_event', function(obj){
-          console.log(obj['users_in_room']);
-          users_in_room = obj['users_in_room'].slice();
-          console.log(obj['message']);
-          if (users_in_room.length > 1) {
-            modal_append(users_in_room[users_in_room.length - 1]);
-          }
-          connectToNewUser(obj['new_peer_id'], stream);
-           //emits a socket event that adds the new user
-          console.log(user_devices);
-    });
 });
 
 
@@ -211,8 +213,7 @@ const connectToNewUser = (userId, stream) => {
 //
 
 peer.on("open", (id) => {
-//start a socket connection. send a set_room event to the server
-	socket.emit('set_room', {'room':ROOM_ID, 'username':USER_NAME, 'id': id});
+
 });
 
 
@@ -301,7 +302,7 @@ socket.on("createMessage", (message, userName) => {
     messages.innerHTML +
     `<div class="message">
         <b><i class="far fa-user-circle"></i> <span> ${
-          userName === user ? "me" : userName
+          userName === USER_NAME ? "me" : userName
         }</span> </b>
         <span>${message}</span>
     </div>`;

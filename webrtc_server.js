@@ -80,13 +80,6 @@ app.set('view engine', 'ejs');
 
 //#endregion
 
-const { ExpressPeerServer } = require("peer");
-const peerServer = ExpressPeerServer(http, {
-  path:'/myapp',
-  debug: true,
-});
-app.use("/peerjs", peerServer);
-
 //#region router for all app endpoints
 
 /* GET home page. */
@@ -189,7 +182,7 @@ app.post('/meeting', db.createMeeting)
           users_in_room[obj['room']] = {}
         }
         users_in_room[obj['room']][socket['id']] = obj['username']
-        io.to(obj['room']).emit('room_join_event',{'new_peer_id':obj['id'],'new_username':obj['username'],'message':'joined room '+obj['room'], 'users_in_room':Object.values(users_in_room[obj['room']]), 'room':obj["room"]});
+        io.to(obj['room']).emit('room_join_event',{'new_peer_id':socket['id'],'new_username':obj['username'],'message':'joined room '+obj['room'], 'users_in_room':Object.values(users_in_room[obj['room']]), 'room':obj["room"]});
       });
 
       socket.on('send_private_message',function(obj){
