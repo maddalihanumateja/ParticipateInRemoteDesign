@@ -1,6 +1,5 @@
 import css from '../css/room_style.scss';
 import io from 'socket.io-client';
-import Peer from 'peerjs';
 
 
 var users_in_room =[];
@@ -33,7 +32,6 @@ socket.on('room_join_event', function(obj){
       if (users_in_room.length > 1) {
         modal_append(users_in_room[users_in_room.length - 1]);
       }
-      //connectToNewUser(obj['new_peer_id'], stream);
       //emits a socket event that adds the new user
       console.log(user_devices);
 });
@@ -165,12 +163,6 @@ var observerConfig = {
         */
 
 
-// Register with the peer server
-let peer = new Peer(USER_NAME,{
-  host: '/',
-  path: '/peerjs/myapp'
-});
-
 let myVideoStream;
 const videoGrid = document.getElementById("video-grid");
 const myVideo = document.createElement("video");
@@ -184,14 +176,6 @@ navigator.mediaDevices.getUserMedia({
     myVideoStream = stream;
     addVideoStream(myVideo, stream);
 
-    /*peer.on("call", (call) => {
-      call.answer(stream);
-      const video = document.createElement("video");
-      call.on("stream", (userVideoStream) => {
-        addVideoStream(video, userVideoStream);
-      });
-    });*/
-
 });
 
 
@@ -204,31 +188,8 @@ const addVideoStream = (video, stream) => {
 };
 
 const connectToNewUser = (userId, stream) => {
-  const call = peer.call(userId, stream);
-  const video = document.createElement("video");
-  call.on("stream", (userVideoStream) => {
-    addVideoStream(video, userVideoStream);
-  });
 };
 
-//
-/*
-peer.on("open", (id) => {
-	console.log('My peer ID is: ' + id);
-});
-peer.on('error', (error) => {
-  console.error(error);
-});
-// Handle incoming data connection
-peer.on('connection', (conn) => {
-  console.log('incoming peer connection!');
-  conn.on('data', (data) => {
-    console.log(`received: ${data}`);
-  });
-  conn.on('open', () => {
-    conn.send('hello!');
-  });
-});*/
 
 
 //Messaging

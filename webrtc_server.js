@@ -1,7 +1,6 @@
 //#region requires
 const { v4: uuidv4 } = require('uuid');
 const express = require("express");
-const { ExpressPeerServer } = require("peer");
 const webpack = require('webpack');
 const path = require('path');
 const webpackDevMiddleware = require('webpack-dev-middleware');
@@ -260,16 +259,6 @@ io.on('connection', function (socket) {
 const listener = http.listen(PORT, function () {
   console.log('Example app listening on port 5000!\n');
 });
-
-/*
-// peerjs server
-const peerServer = ExpressPeerServer(listener, {
-  debug: true,
-  path: '/myapp'
-});
-
-app.use('/peerjs', peerServer);
-*/
 
 app.get('/devices.txt', (req, res) => {
   res.send(device);
