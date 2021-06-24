@@ -1,6 +1,7 @@
 import css from '../css/room_style.scss';
-//import io from 'socket.io-client';
-//import Peer from 'peerjs';
+import io from 'socket.io-client';
+import Peer from 'peerjs';
+
 
 var users_in_room =[];
 var user_devices = [];
@@ -32,8 +33,8 @@ socket.on('room_join_event', function(obj){
       if (users_in_room.length > 1) {
         modal_append(users_in_room[users_in_room.length - 1]);
       }
-      // connectToNewUser(obj['new_peer_id'], stream);
-       //emits a socket event that adds the new user
+      //connectToNewUser(obj['new_peer_id'], stream);
+      //emits a socket event that adds the new user
       console.log(user_devices);
 });
 
@@ -164,10 +165,10 @@ var observerConfig = {
         */
 
 
-var peer = new Peer(undefined, {
-  path: "/myapp",
-  host: "/",
-  port: "5000",
+// Register with the peer server
+let peer = new Peer(USER_NAME,{
+  host: '/',
+  path: '/peerjs/myapp'
 });
 
 let myVideoStream;
@@ -183,13 +184,13 @@ navigator.mediaDevices.getUserMedia({
     myVideoStream = stream;
     addVideoStream(myVideo, stream);
 
-    peer.on("call", (call) => {
+    /*peer.on("call", (call) => {
       call.answer(stream);
       const video = document.createElement("video");
       call.on("stream", (userVideoStream) => {
         addVideoStream(video, userVideoStream);
       });
-    });
+    });*/
 
 });
 
@@ -211,10 +212,23 @@ const connectToNewUser = (userId, stream) => {
 };
 
 //
-
+/*
 peer.on("open", (id) => {
-
+	console.log('My peer ID is: ' + id);
 });
+peer.on('error', (error) => {
+  console.error(error);
+});
+// Handle incoming data connection
+peer.on('connection', (conn) => {
+  console.log('incoming peer connection!');
+  conn.on('data', (data) => {
+    console.log(`received: ${data}`);
+  });
+  conn.on('open', () => {
+    conn.send('hello!');
+  });
+});*/
 
 
 //Messaging
@@ -224,14 +238,14 @@ let messages = document.querySelector(".messages");
 
 send.addEventListener("click", (e) => {
   if (text.value.length !== 0) {
-    socket.emit("message", text.value);
+    socket.emit("chat_message", {'message':text.value,'username':USER_NAME,'room':ROOM_ID});
     text.value = "";
   }
 });
 
 text.addEventListener("keydown", (e) => {
   if (e.key === "Enter" && text.value.length !== 0) {
-    socket.emit("message", text.value);
+    socket.emit("chat_message", {'message':text.value,'username':USER_NAME,'room':ROOM_ID});
     text.value = "";
   }
 });

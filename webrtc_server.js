@@ -1,6 +1,7 @@
 //#region requires
 const { v4: uuidv4 } = require('uuid');
 const express = require("express");
+const { ExpressPeerServer } = require("peer");
 const webpack = require('webpack');
 const path = require('path');
 const webpackDevMiddleware = require('webpack-dev-middleware');
@@ -175,14 +176,17 @@ app.post('/meeting', db.createMeeting)
       socket.on('set_room',function(obj){
         console.log('Room name: '+obj['room']+' for username: '+obj['username'])
         socket.join(obj['room']);
-        socket.on("message", (message) => {
-          io.to(obj['room']).emit("createMessage", message, obj['username']);
-        });
+        
         if(users_in_room[obj['room']] == null){
           users_in_room[obj['room']] = {}
         }
         users_in_room[obj['room']][socket['id']] = obj['username']
-        io.to(obj['room']).emit('room_join_event',{'new_peer_id':socket['id'],'new_username':obj['username'],'message':'joined room '+obj['room'], 'users_in_room':Object.values(users_in_room[obj['room']]), 'room':obj["room"]});
+        socket.to(obj['room']).emit('room_join_event',{'new_peer_id':socket['id'],'new_username':obj['username'],'message':'joined room '+obj['room'], 'users_in_room':Object.values(users_in_room[obj['room']]), 'room':obj["room"]});
+      });
+
+      socket.on("chat_message", (obj) => {
+        console.log('Message "'+obj['message']+'" sent to room:'+obj['room']);
+        io.to(obj['room']).emit("createMessage", obj['message'], obj['username']);
       });
 
       socket.on('send_private_message',function(obj){
@@ -253,9 +257,19 @@ io.on('connection', function (socket) {
 });
 
 // Serve the files on PORT.
-http.listen(PORT, function () {
+const listener = http.listen(PORT, function () {
   console.log('Example app listening on port 5000!\n');
 });
+
+/*
+// peerjs server
+const peerServer = ExpressPeerServer(listener, {
+  debug: true,
+  path: '/myapp'
+});
+
+app.use('/peerjs', peerServer);
+*/
 
 app.get('/devices.txt', (req, res) => {
   res.send(device);
