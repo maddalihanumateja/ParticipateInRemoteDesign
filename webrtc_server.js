@@ -152,9 +152,10 @@ app.post('/meeting', db.createMeeting)
 
               //update database meeting logs here
               console.log(db.updateMeetingLog(users_in_room[room][socket_id],room));
-
+              var leaving_username = users_in_room[room][socket_id]
               delete users_in_room[room][socket_id]
-              io.to(room).emit('room_leave_event',{'message':'left room '+room, 'users_in_room':Object.values(users_in_room[room]), 'room':room});
+              io.to(room).emit('room_leave_event',{'leaving_username':leaving_username,'leaving_user_id':socket_id,'message':'left room '+room, 'users_in_room':Object.values(users_in_room[room]), 'room':room});
+              
 
 	// end the meeting if nobody is left
               if (Object.entries(users_in_room[room]).length === 0) {
@@ -246,13 +247,6 @@ app.post('/upload', async (req, res) => {
     } catch (err) {
         res.status(500).send(err);
     }
-});
-
-io.on('connection', function (socket) {
-    console.log('connected:', socket.client.id);
-    socket.on('serverEvent', function (data) {
-        console.log('new message from client:', data);
-    });
 });
 
 // Serve the files on PORT.
