@@ -4,6 +4,7 @@ const { RTCPeerConnection, RTCSessionDescription } = window;
 
 var users_in_room = [];
 var user_devices = [];
+var user_videos = {};
 
 var pcLocal = {};
 var pcRemote = {};
@@ -29,8 +30,6 @@ $.get("/devices.txt", function(data, status){
 
 // Other socket.io session events
 
-//start a socket connection. send a set_room event to the server
-socket.emit('set_room', {'room':ROOM_ID, 'username':USER_NAME});
 socket.on('existing_users', function(obj){
       console.log(obj);
       if (Object.values(obj).length > 1) {
@@ -106,7 +105,7 @@ socket.on("offer", (socketId, description) => {
       socket.emit("answer", socketId, pcRemote[socketId].localDescription);
     });
   pcRemote[socketId].ontrack = event => {
-  	var video = document.createElement("video");
+  	var video = user_videos[socketId];	
     addVideoStream(video, event.streams[0], socketId);
   };
   pcRemote[socketId].onicecandidate = event => {
@@ -255,6 +254,10 @@ navigator.mediaDevices.getUserMedia({
 .then((stream) => {
     myVideoStream = stream;
     addVideoStream(myVideo, stream, USER_NAME);
+    videoGrid.append(myVideo);
+}).then(()=>{
+	//start a socket connection. send a set_room event to the server
+	socket.emit('set_room', {'room':ROOM_ID, 'username':USER_NAME});
 });
 
 
@@ -264,22 +267,15 @@ const addVideoStream = (video, stream, id) => {
     video.setAttribute("id", id);
     video.addEventListener("loadedmetadata", () => {
        video.play();
-       videoGrid.append(video);
     });
 };
 
 function call(userName, socketId) {
 
 	console.log('Starting call to '+userName);
-	const audioTracks = myVideoStream.getAudioTracks();
-	const videoTracks = myVideoStream.getVideoTracks();
+	user_videos[socketId] = document.createElement("video");
+	videoGrid.append(user_videos[socketId]);
 
-	if (audioTracks.length > 0) {
-    	console.log(`Using audio device: ${audioTracks[0].label}`);
-  	}
-  	if (videoTracks.length > 0) {
-    	console.log(`Using video device: ${videoTracks[0].label}`);
-  	}
   	// Create an RTCPeerConnection via the polyfill.
   	
   	let stream = myVideo.srcObject;
