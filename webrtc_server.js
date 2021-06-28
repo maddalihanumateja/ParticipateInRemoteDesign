@@ -180,8 +180,10 @@ app.post('/meeting', db.createMeeting)
         if(users_in_room[obj['room']] == null){
           users_in_room[obj['room']] = {}
         }
+        io.to(socket['id']).emit('existing_users', users_in_room[obj['room']]);
         users_in_room[obj['room']][socket['id']] = obj['username']
         socket.to(obj['room']).emit('room_join_event',{'new_peer_id':socket['id'],'new_username':obj['username'],'message':'joined room '+obj['room'], 'users_in_room':Object.values(users_in_room[obj['room']]), 'room':obj["room"]});
+
       });
 
       socket.on("chat_message", (obj) => {
@@ -204,6 +206,19 @@ app.post('/meeting', db.createMeeting)
           io.to(socket['id']).emit('recieved_private_message',msg);
         }
 
+      });
+
+      socket.on("offer", (id, message) => {
+          socket.to(id).emit("offer", socket.id, message);
+      });
+      socket.on("answer", (id, message) => {
+        socket.to(id).emit("answer", socket.id, message);
+      });
+      socket.on("local_candidate", (id, message) => {
+        socket.to(id).emit("local_candidate", socket.id, message);
+      });
+      socket.on("remote_candidate", (id, message) => {
+        socket.to(id).emit("remote_candidate", socket.id, message);
       });
 
   });

@@ -2,11 +2,11 @@ import css from '../css/room_style.scss';
 import io from 'socket.io-client';
 const { RTCPeerConnection, RTCSessionDescription } = window;
 
-var users_in_room =[];
+var users_in_room = [];
 var user_devices = [];
 
-var pcLocal={};
-var pcRemote={};
+var pcLocal = {};
+var pcRemote = {};
 const offerOptions = {
   offerToReceiveAudio: 1,
   offerToReceiveVideo: 1
@@ -31,6 +31,15 @@ $.get("/devices.txt", function(data, status){
 
 //start a socket connection. send a set_room event to the server
 socket.emit('set_room', {'room':ROOM_ID, 'username':USER_NAME});
+socket.on('existing_users', function(obj){
+      console.log(obj);
+      if (Object.values(obj).length > 1) {
+        //modal_append(users_in_room[users_in_room.length - 1]);
+      }
+      for(var socketId in obj){
+      	call(obj[socketId], socketId);
+      }
+});
 
 socket.on('room_join_event', function(obj){
       console.log(obj['users_in_room']);
@@ -40,9 +49,88 @@ socket.on('room_join_event', function(obj){
         //modal_append(users_in_room[users_in_room.length - 1]);
       }
 
-      call(obj['new_username']);
+      call(obj['new_username'], obj['new_peer_id']);
       //emits a socket event that adds the new user
       console.log(user_devices);
+});
+
+socket.on('room_leave_event', function(obj){
+      console.log(obj['users_in_room']);
+      users_in_room = obj['users_in_room'].slice(); //sets users_in_room equal to the new array
+      user_devices = user_devices.filter((device) => users_in_room.includes(device['username'])); //returns the filtered array back into user_devices
+      console.log(obj['leaving_user_id'], obj['message']);
+      let leaving_user_id = obj['leaving_user_id'];
+      var video = document.getElementById(leaving_user_id);
+      video.remove();
+      pcLocal[leaving_user_id].close();
+      pcLocal[leaving_user_id]=null;
+    });
+
+socket.on('recieved_private_message', function(msg){
+      console.log(msg);
+    });
+
+socket.on('send_available_devices', function(obj) {
+    console.log(obj);
+    if ((user_devices.filter((device) => obj['username'] === device['username'])).length == 0) { //checks if the json object is already contained in the array
+        user_devices.push(obj);
+    }
+    console.log(user_devices);
+});
+
+socket.on("answer", (id, description) => {
+  console.log("answer "+ id);
+  pcLocal[id].setRemoteDescription(description);
+});
+
+socket.on("local_candidate", (id, candidate) => {
+	console.log("local_candidate "+ id);
+	pcLocal[id].addIceCandidate(new RTCIceCandidate(candidate));
+});
+
+socket.on("remote_candidate", (id, candidate) => {
+	console.log("remote_candidate "+ id);
+  	pcRemote[id]
+    .addIceCandidate(new RTCIceCandidate(candidate))
+    .catch(e => console.error(e));
+});
+
+socket.on("offer", (socketId, description) => {
+	console.log("offered "+ socketId);
+  pcRemote[socketId] = new RTCPeerConnection(servers);
+  pcRemote[socketId]
+    .setRemoteDescription(description)
+    .then(() => pcRemote[socketId].createAnswer())
+    .then(sdp => pcRemote[socketId].setLocalDescription(sdp))
+    .then(() => {
+      socket.emit("answer", socketId, pcRemote[socketId].localDescription);
+    });
+  pcRemote[socketId].ontrack = event => {
+  	var video = document.createElement("video");
+    addVideoStream(video, event.streams[0], socketId);
+  };
+  pcRemote[socketId].onicecandidate = event => {
+    if (event.candidate) {
+      socket.emit("local_candidate", socketId, event.candidate);
+    }
+  };
+});
+
+var researcher_trigger_event = function(obj){
+      socket.emit('send_private_message', {'to_username':obj['to_username'], 'message':obj['message'], 'room': obj['room']});
+      return false;
+}
+
+
+socket.on("createMessage", (message, userName) => {
+  messages.innerHTML =
+    messages.innerHTML +
+    `<div class="message">
+        <b><i class="far fa-user-circle"></i> <span> ${
+          userName === USER_NAME ? "me" : userName
+        }</span> </b>
+        <span>${message}</span>
+    </div>`;
 });
 
 function modal_append(name) {
@@ -68,37 +156,6 @@ if (devices.includes("projector")) {
 }
 
 
-}
-
-socket.on('room_leave_event', function(obj){
-      console.log(obj['users_in_room']);
-      users_in_room = obj['users_in_room'].slice(); //sets users_in_room equal to the new array
-      user_devices = user_devices.filter((device) => users_in_room.includes(device['username'])); //returns the filtered array back into user_devices
-      console.log(obj['message']);
-      leaving_username = obj['leaving_username'];
-      pcLocal[leaving_username].close();
-      pcRemote[leaving_username].close();
-      pcLocal[leaving_username] = pcRemote[leaving_username] = null;
-      var video = document.getElementById(leaving_username);
-      video.remove();
-    });
-
-socket.on('recieved_private_message', function(msg){
-      console.log(msg);
-    });
-
-socket.on('send_available_devices', function(obj) {
-    console.log(obj);
-    if ((user_devices.filter((device) => obj['username'] === device['username'])).length == 0) { //checks if the json object is already contained in the array
-        user_devices.push(obj);
-    }
-    console.log(user_devices);
-});
-
-
-var researcher_trigger_event = function(obj){
-      socket.emit('send_private_message', {'to_username':obj['to_username'], 'message':obj['message'], 'room': obj['room']});
-      return false;
 }
 
 var observer = new MutationObserver(function (mutations) {
@@ -183,6 +240,14 @@ const videoGrid = document.getElementById("video-grid");
 const myVideo = document.createElement("video");
 myVideo.muted = true;
 
+const servers = {
+  	iceServers: [
+    	{
+    		urls: ["stun:stun.l.google.com:19302"]
+    	}
+  	]
+};
+
 navigator.mediaDevices.getUserMedia({
     audio: true,
     video: true,
@@ -195,6 +260,7 @@ navigator.mediaDevices.getUserMedia({
 
 const addVideoStream = (video, stream, id) => {
     video.srcObject = stream;
+    video.muted=true;
     video.setAttribute("id", id);
     video.addEventListener("loadedmetadata", () => {
        video.play();
@@ -202,67 +268,9 @@ const addVideoStream = (video, stream, id) => {
     });
 };
 
-function call(userId) {
+function call(userName, socketId) {
 
-	function gotDescriptionLocal(userId) {
-		return function(desc){
-			pcLocal[userId].setLocalDescription(desc);
-			console.log(`Offer from pc-${userId}-Local\n${desc.sdp}`);
-			pcRemote[userId].setRemoteDescription(desc);
-			// Since the 'remote' side has no media stream we need
-			// to pass in the right constraints in order for it to
-			// accept the incoming offer of audio and video.
-			pcRemote[userId].createAnswer().then(gotDescriptionRemote(userId), onCreateSessionDescriptionError);	
-		}
-	  
-	}
-
-	function gotDescriptionRemote(userId) {
-		return function(desc){
-			pcRemote[userId].setLocalDescription(desc);
-			console.log(`Answer from pc-${userId}-Remote\n${desc.sdp}`);
-			pcLocal[userId].setRemoteDescription(desc);
-		}
-	  
-	}
-
-	function iceCallbackLocal(userId) {
-		return function(event){
-			handleCandidate(event.candidate, pcRemote[userId], 'pc'+userId+': ', 'local');
-		}
-	}
-
-	function iceCallbackRemote(userId) {
-		return function(event){
-			handleCandidate(event.candidate, pcLocal[userId], 'pc'+userId+': ', 'remote');
-		}
-	}
-
-	function gotRemoteStream(userId) {
-		return function(e){
-			if(userId != USER_NAME){
-				var video = document.createElement("video");
-				addVideoStream(video, e.streams[0], userId);
-				console.log('pc'+userId+': received remote stream');
-			}
-		}
-	}
-
-	function handleCandidate(candidate, dest, prefix, type) {
-	  dest.addIceCandidate(candidate)
-	      .then(onAddIceCandidateSuccess, onAddIceCandidateError);
-	  console.log(`${prefix}New ${type} ICE candidate: ${candidate ? candidate.candidate : '(null)'}`);
-	}
-
-	function onAddIceCandidateSuccess() {
-	  console.log('AddIceCandidate success.');
-	}
-
-	function onAddIceCandidateError(error) {
-	  console.log(`Failed to add ICE candidate: ${error.toString()}`);
-	}
-
-	console.log('Starting call to '+userId);
+	console.log('Starting call to '+userName);
 	const audioTracks = myVideoStream.getAudioTracks();
 	const videoTracks = myVideoStream.getVideoTracks();
 
@@ -273,24 +281,25 @@ function call(userId) {
     	console.log(`Using video device: ${videoTracks[0].label}`);
   	}
   	// Create an RTCPeerConnection via the polyfill.
-  	const servers = null;
-  	pcLocal[userId] = new RTCPeerConnection(servers);
-  	pcRemote[userId] = new RTCPeerConnection(servers);
-  	pcRemote[userId].ontrack = gotRemoteStream(userId);
-  	pcLocal[userId].onicecandidate = iceCallbackLocal(userId);
-  	pcRemote[userId].onicecandidate = iceCallbackRemote(userId);
-  	console.log(userId+': created local and remote peer connection objects');
+  	
+  	let stream = myVideo.srcObject;
+  	pcLocal[socketId] = new RTCPeerConnection(servers);
+  	stream.getTracks().forEach(track => pcLocal[socketId].addTrack(track, stream));
+  	pcLocal[socketId].onicecandidate = event => {
+    	if (event.candidate) {
+      		socket.emit("remote_candidate", socketId, event.candidate);
+    	}
+    };
 
-  	myVideoStream.getTracks().forEach(track => pcLocal[userId].addTrack(track, myVideoStream));
-   	console.log('Adding local stream to '+userId+'-Local');
-   	pcLocal[userId]
-       .createOffer(offerOptions)
-       .then(gotDescriptionLocal(userId), onCreateSessionDescriptionError);
+   	console.log('Adding local stream to '+userName+'-Local');
+  	
+  	pcLocal[socketId]
+  	    .createOffer()
+  	    .then(sdp => pcLocal[socketId].setLocalDescription(sdp))
+  	    .then(() => {
+  	      socket.emit("offer", socketId, pcLocal[socketId].localDescription);
+  	    });
 };
-
-function onCreateSessionDescriptionError(error) {
-  console.log(`Failed to create session description: ${error.toString()}`);
-}
 
 
 //Messaging
@@ -372,14 +381,8 @@ showChat.addEventListener("click", () => {
   document.querySelector(".header__back").style.display = "block";
 });
 
-
-socket.on("createMessage", (message, userName) => {
-  messages.innerHTML =
-    messages.innerHTML +
-    `<div class="message">
-        <b><i class="far fa-user-circle"></i> <span> ${
-          userName === USER_NAME ? "me" : userName
-        }</span> </b>
-        <span>${message}</span>
-    </div>`;
-});
+window.onunload = window.onbeforeunload = () => {
+  socket.close();
+  pcRemote.forEach(peerConnection => peerConection.close());
+  pcLocal.forEach(peerConnection => peerConection.close());
+};
