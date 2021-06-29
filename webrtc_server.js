@@ -42,6 +42,7 @@ var connected_users = {};
 //Objects storing users in a specific meeting room
 var users_in_room = {};
 
+var chat_log = {};
 var device = "";
 
 // Tell express to use the webpack-dev-middleware and use the webpack.config.js
@@ -99,7 +100,26 @@ app.post("/room_create", (req, res) => {
 /* GET meeting room. */
 app.get("/room", (req, res) => {
     console.log("Rendering room with UUID: "+req.query.meeting_number);
-    res.render("room.ejs", { roomId: req.query.meeting_number, userName: req.query.user_name, userType : req.query.user_type, passWord: req.query.meeting_password});
+    let userName, userType, passWord;
+    if(req.query.user_type){
+      userType = req.query.user_type;
+    }
+    else{
+      userType = "participant";
+    }
+    if(req.query.user_name){
+      userName = req.query.user_name;
+    }
+    else{
+      userName = "";
+    }
+    if(req.query.meeting_password){
+      passWord = req.query.meeting_password;
+    }
+    else{
+      passWord = ""
+    }
+    res.render("room.ejs", { roomId: req.query.meeting_number, userName: userName, userType : userType, passWord: passWord});
 });
 
 /* POST request with meeting details and response with zoom signature */
@@ -181,6 +201,11 @@ app.post('/meeting', db.createMeeting)
           users_in_room[obj['room']] = {}
         }
         io.to(socket['id']).emit('existing_users', users_in_room[obj['room']]);
+
+        if(chat_log[obj['room']]){
+          chat_log[obj['room']].forEach(item => io.to(socket['id']).emit("createMessage", item[0], item[1]));
+        }
+
         users_in_room[obj['room']][socket['id']] = obj['username']
         socket.to(obj['room']).emit('room_join_event',{'new_peer_id':socket['id'],'new_username':obj['username'],'message':'joined room '+obj['room'], 'users_in_room':Object.values(users_in_room[obj['room']]), 'room':obj["room"]});
 
@@ -188,6 +213,10 @@ app.post('/meeting', db.createMeeting)
 
       socket.on("chat_message", (obj) => {
         console.log('Message "'+obj['message']+'" sent to room:'+obj['room']);
+        if(!chat_log[obj['room']]){
+          chat_log[obj['room']] = [];
+        }
+        chat_log[obj['room']].push([obj['message'], obj['username']]);
         io.to(obj['room']).emit("createMessage", obj['message'], obj['username']);
       });
 

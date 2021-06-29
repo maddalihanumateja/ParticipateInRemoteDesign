@@ -267,6 +267,7 @@ const addVideoStream = (video, stream, id) => {
     video.setAttribute("id", id);
     video.addEventListener("loadedmetadata", () => {
        video.play();
+       video.muted=false;
     });
 };
 
@@ -318,7 +319,6 @@ text.addEventListener("keydown", (e) => {
 });
 
 // UI buttons
-const inviteButton = document.querySelector("#inviteButton");
 const muteButton = document.querySelector("#muteButton");
 const stopVideo = document.querySelector("#stopVideo");
 const showChat = document.querySelector("#showChat");
@@ -356,12 +356,15 @@ stopVideo.addEventListener("click", () => {
   }
 });
 
-inviteButton.addEventListener("click", (e) => {
-  prompt(
-    "Copy this link and send it to people you want to meet with",
-    window.location.href
-  );
-});
+if(USER_TYPE == "researcher"){
+	const inviteButton = document.querySelector("#inviteButton");
+	inviteButton.addEventListener("click", (e) => {
+	  prompt(
+	    "Copy this link and send it to people you want to meet with",
+	    window.location.origin+"/room?meeting_number="+ROOM_ID
+	  );
+	});	
+}
 
 backBtn.addEventListener("click", () => {
   document.querySelector(".main__left").style.display = "flex";
