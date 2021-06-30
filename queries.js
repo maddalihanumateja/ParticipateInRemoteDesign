@@ -14,6 +14,7 @@ const pool = new Pool(dbConfig)
 
 function createAndMigrateDB() {
     createDb(process.env.DATABASE, dbConfig).then(() => {
+        console.log("Starting DB migrations");
         return migrate(dbConfig, "migrations")
         // "migrations" is the path where all the migration files are contained
     }).then(() => {} )

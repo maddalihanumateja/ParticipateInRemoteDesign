@@ -18,10 +18,27 @@ $.get('https://api.ipify.org?format=json', function(data, status) {
 //When you click on the participant side hide the researcher side and display the participant's options
 document.getElementById('participant_side').addEventListener('click', (e) => {
 
-    $('#researcher_side_init_message').hide();
-    $('#researcher_side').toggleClass('col-sm-6 col-sm-2');
-    $('#researcher_side').toggleClass('order-first');
+    if($('#participant_side').hasClass("selected-user-type")){
+        return;
+    }
+
+    $('#participant_side').addClass("col-md-8 order-first selected-user-type");
+    $('#participant_side').removeClass("col-md-6 col-md-2");
+    $('#participant_side').children().show();
     $('#participant_side_init_message').hide();
+    if($('#participant_side_init_title').hasClass("h4")){
+        $('#participant_side_init_title').toggleClass("h1 h4");
+    }
+    
+    $('#researcher_side').removeClass("col-md-6 col-md-8 order-first selected-user-type");
+    $('#researcher_side').addClass("col-md-2");
+    $('#researcher_side').children().hide();
+    $('#researcher_side_init_text').show();
+    $('#researcher_side_init_message').show();
+    if($('#researcher_side_init_title').hasClass("h1")){
+        $('#researcher_side_init_title').toggleClass("h1 h4");
+    }
+
     //Change to log only active meetings
     $.get("/meeting_active_logs", function(data, status){
         if(data.length==0){
@@ -72,12 +89,26 @@ document.getElementById('participant_side').addEventListener('click', (e) => {
 //When you click on the researcher side hide the participant side and display the participant's options
 document.getElementById('researcher_side').addEventListener('click', (e) => {
 
-    $('#participant_side_init_message').hide();
-    $('#participant_side').toggleClass('col-sm-6 col-sm-2');
-    $('#participant_side').toggleClass('order-first');
-    $('#researcher_side_init_message').hide();
-    $('#researcher_side_form').show(100);
+    if($('#researcher_side').hasClass("selected-user-type")){
+        return;
+    }
 
+    $('#researcher_side').addClass("col-md-8 order-first selected-user-type");
+    $('#researcher_side').removeClass("col-md-6 col-md-2");
+    $('#researcher_side').children().show();
+    $('#researcher_side_init_message').hide();
+    if($('#researcher_side_init_title').hasClass("h4")){
+        $('#researcher_side_init_title').toggleClass("h1 h4");
+    }
+    
+    $('#participant_side').removeClass("col-md-6 col-md-8 order-first selected-user-type");
+    $('#participant_side').addClass("col-md-2");
+    $('#participant_side').children().hide();
+    $('#participant_side_init_text').show();
+    $('#participant_side_init_message').show();
+    if($('#participant_side_init_title').hasClass("h1")){
+        $('#participant_side_init_title').toggleClass("h1 h4");
+    }
 
     $.get("/meeting_active_logs", function(data, status){
         if(data.length==0){
@@ -169,6 +200,7 @@ var initialize_button_click = (meetConfig) => {
                 user_type: meetConfig.user_type,
                 meeting_host: meetConfig.role = 1 ? true:false})
             }).then((response) => {
+                console.log("Added meeting entry", response.json());
             return response.json();
         }).then((data) => {console.log(data)});
 
@@ -186,8 +218,11 @@ var initialize_button_click = (meetConfig) => {
                 user_type: meetConfig.user_type,
                 meeting_host: meetConfig.role = 1 ? true:false})
             }).then((response) => {
+                console.log("Added meeting log entry", response.json());
             return response.json();
         }).then((data) => {console.log(data)});
+
+            alert("Join meeting?");
 
         /*fetch('/room_create', {
             method: 'POST',
