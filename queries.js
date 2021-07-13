@@ -17,8 +17,8 @@ function createAndMigrateDB() {
         console.log("Starting DB migrations");
         return migrate(dbConfig, "migrations")
         // "migrations" is the path where all the migration files are contained
-    }).then(() => {} )
-    .catch((err) => {
+    }).catch((err) => {
+        console.log("Something went wrong! ");
         console.log(err)
     })
 }

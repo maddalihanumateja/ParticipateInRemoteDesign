@@ -18,12 +18,14 @@ var socket = io();
 
 var devices = "";
 
-//If researcher
 /*
-$.get("/devices.txt", function(data, status){
+//If researcher
+if(USER_TYPE == "researcher"){
+	$.get("/devices.txt", function(data, status){
         console.log(data);
         devices = data;
     });
+}
 */
 
 

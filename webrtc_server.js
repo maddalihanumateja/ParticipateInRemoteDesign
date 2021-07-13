@@ -31,6 +31,7 @@ const _ = require('lodash');
 
 //Intialize DB and migrations
 db.createAndMigrateDB();
+console.log("Initialized DB");
 
 //Initialize server port
 const PORT = process.env.PORT || 5000
