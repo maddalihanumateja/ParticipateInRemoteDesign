@@ -8,7 +8,7 @@ $('#researcher_side_form').hide();
 $('#participant_side_form').hide();
 
 //Initialize random meeting UUID
-document.getElementById('meeting_number').value = uuidv4();
+document.getElementById('meeting_name').value = uuidv4();
 
 var ip_address="0.0.0.0";
 $.get('https://api.ipify.org?format=json', function(data, status) {
@@ -51,11 +51,11 @@ document.getElementById('participant_side').addEventListener('click', (e) => {
             $('#participant_meeting_buttons').html("");
             for(var i=0;i<data.length;i++){
                 var button = document.createElement("button");
-                button.innerHTML = 'Click here to join meeting '+(i+1);
+                button.innerHTML = `Click here to join meeting "${data[i].meeting_name}"`;
                 button.classList.add('btn','btn-primary');
                 button.setAttribute("id","pjoin_mtg_"+(i+1));
                 var meetConfig_i = {
-                        meetingNumber: data[i].meeting_number,
+                        meetingName: data[i].meeting_name,
                         passWord: data[i].meeting_password,
                         user_type: 'participant',
                         leaveUrl: 'https://zoom.us',
@@ -68,7 +68,14 @@ document.getElementById('participant_side').addEventListener('click', (e) => {
                         //Get user name and email only after the join button is clicked
                         meetConfig_i["userName"] = document.getElementById('participant_display_name').value;
                         meetConfig_i["userEmail"] = "";
-                        initialize_button_click(meetConfig_i);
+                        if(meetConfig_i["userName"].length == 0){
+                            alert("Please enter a user name.");
+                            return null;
+                        }
+                        else{
+                            initialize_button_click(meetConfig_i);    
+                        }
+                        
                 });
                 $('#participant_meeting_buttons').append(button);
             }
@@ -119,11 +126,11 @@ document.getElementById('researcher_side').addEventListener('click', (e) => {
             $('#researcher_meeting_buttons').html("");
             for(var i=0;i<data.length;i++){
                 var button = document.createElement("button");
-                button.innerHTML = 'Click here to join meeting '+(i+1);
+                button.innerHTML = `Click here to join meeting "${data[i].meeting_name}"`;
                 button.classList.add('btn','btn-primary');
                 button.setAttribute("id","rjoin_mtg_"+(i+1));
                 var meetConfig_i = {
-                        meetingNumber: data[i].meeting_number,
+                        meetingName: data[i].meeting_name,
                         passWord: data[i].meeting_password,
                         user_type: 'researcher',
                         leaveUrl: 'https://zoom.us',
@@ -136,7 +143,13 @@ document.getElementById('researcher_side').addEventListener('click', (e) => {
                         //Get user name and email only after the join button is clicked
                         meetConfig_i["userName"] = document.getElementById('display_name').value;
                         meetConfig_i["userEmail"] = document.getElementById('display_email').value;
-                        initialize_button_click(meetConfig_i);
+                        if(meetConfig_i["userName"].length == 0){
+                            alert("Please enter a user name.");
+                            return null;
+                        }
+                        else{
+                            initialize_button_click(meetConfig_i);    
+                        }
                 });
                 $('#researcher_meeting_buttons').append(button);
             }
@@ -155,7 +168,7 @@ document.getElementById('start_meeting').addEventListener('click', (e) => {
     e.preventDefault();
 
     var meetConfig = {
-        meetingNumber: document.getElementById('meeting_number').value,
+        meetingName: document.getElementById('meeting_name').value,
         userName: document.getElementById('display_name').value,
         userEmail: document.getElementById('display_email').value,
         passWord: document.getElementById('meeting_password').value,
@@ -165,42 +178,21 @@ document.getElementById('start_meeting').addEventListener('click', (e) => {
         role: 1
     };
 
-    console.log('Creating a meeting');
-    fetch('/meeting', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({meeting_number: meetConfig.meetingNumber,
-            meeting_password: meetConfig.passWord,
-            user_name: meetConfig.userName,
-            email: meetConfig.userEmail,
-            ip_address: meetConfig.ip_address,
-            user_type: meetConfig.user_type,
-            meeting_host: meetConfig.role = 1 ? true:false})
-        }).then((response) => {
-        return response.json();
-    }).then((data) => {console.log(data)});
+    //Check if meeting name already exists and is active
 
-    console.log('Creating a meeting log');
-    fetch('/meeting_log', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({meeting_number: meetConfig.meetingNumber,
-            meeting_password: meetConfig.passWord,
-            user_name: meetConfig.userName,
-            email: meetConfig.userEmail,
-            ip_address: meetConfig.ip_address,
-            user_type: meetConfig.user_type,
-            meeting_host: meetConfig.role = 1 ? true:false})
-        }).then((response) => {
-        return response.json();
-    }).then((data) => {console.log(data)});
+    $.get("/meeting_active_logs", function(data, status){
+        if(data.length>0){
+            for(var i=0;i<data.length;i++){
+                if(meetConfig.meeting_name == data[i].meeting_name){
+                    alert("Meeting name already exists for an active meeting. Please type another meeting name (or join the active meeting with the same name).");
+                    return null;
+                }
+            }
+        }
 
+        initialize_button_click(meetConfig);
 
-    initialize_button_click(meetConfig);
+    });
 });
 
 var initialize_button_click = (meetConfig) => {
@@ -215,50 +207,15 @@ var initialize_button_click = (meetConfig) => {
         return response.json();
     })
     .then((data) => {
-        //Go to the room with the assigned meetingNumber. Set user room here. Create meeting logs.
-        if(meetConfig.meetingNumber){
+        //Go to the room with the assigned meetingName. Set user room here. Create meeting logs.
+        if(meetConfig.meetingName){
             //Known meeting number
-            var meeting_number = meetConfig.meetingNumber;
+            var meeting_name = meetConfig.meetingName;
         }
         else{
             // Meeting room created just now with webrtc_sign if user left it blank
-            var meeting_number = data.meetingNumber;
+            var meeting_name = data.meetingName;
         }
-
-        fetch('/meeting', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({meeting_number: meeting_number,
-                meeting_password: meetConfig.passWord,
-                user_name: meetConfig.userName,
-                email: meetConfig.userEmail,
-                ip_address: meetConfig.ip_address,
-                user_type: meetConfig.user_type,
-                meeting_host: meetConfig.role = 1 ? true:false})
-            }).then((response) => {
-                console.log("Added meeting entry", response.json());
-            return response.json();
-        }).then((data) => {console.log(data)});
-
-        console.log('Creating a meeting log');
-        fetch('/meeting_log', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({meeting_number: meeting_number,
-                meeting_password: meetConfig.passWord,
-                user_name: meetConfig.userName,
-                email: meetConfig.userEmail,
-                ip_address: meetConfig.ip_address,
-                user_type: meetConfig.user_type,
-                meeting_host: meetConfig.role = 1 ? true:false})
-            }).then((response) => {
-                console.log("Added meeting log entry", response.json());
-            return response.json();
-        }).then((data) => {console.log(data)});
 
             alert("Join meeting?");
 
@@ -267,7 +224,7 @@ var initialize_button_click = (meetConfig) => {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({meeting_number: meeting_number,
+            body: JSON.stringify({meeting_name: meeting_name,
                 meeting_password: meetConfig.passWord,
                 user_name: meetConfig.userName,
                 email: meetConfig.userEmail,
@@ -275,7 +232,7 @@ var initialize_button_click = (meetConfig) => {
                 user_type: meetConfig.user_type,
                 meeting_host: meetConfig.role = 1 ? true:false})
         });*/
-        return {meeting_number: meeting_number,
+        return {meeting_name: meeting_name,
                 meeting_password: meetConfig.passWord,
                 user_name: meetConfig.userName,
                 user_type: meetConfig.user_type,

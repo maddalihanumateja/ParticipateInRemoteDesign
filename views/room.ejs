@@ -5,6 +5,7 @@
     <title>Room <%= roomId %></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
     <script src="https://kit.fontawesome.com/c939d0e917.js"></script>
+    <script src="node_modules/jquery/dist/jquery.min.js"></script>
     <script>
       const ROOM_ID = "<%= roomId %>";
       <% if(userName.length == 0){%>
@@ -14,6 +15,78 @@
       <% }%>
       const USER_TYPE = "<%= userType %>";
       const PASSWORD = "<%= passWord %>";
+      var ip_address="0.0.0.0";
+      $.get('https://api.ipify.org?format=json', function(data, status) {
+          ip_address = data.ip;
+      });
+
+      $.get("/meeting_active_logs", function(data, status){
+          var meeting_exists=false;
+          if(data.length>0){
+              for(var i=0;i<data.length;i++){
+                  if(ROOM_ID == data[i].meeting_name){
+                    meeting_exists = true;
+                    break;
+                  }
+              }
+          }
+          if(!meeting_exists){
+            fetch('/meeting', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({meeting_name: "<%= roomId %>",
+                    meeting_password: "<%= passWord %>",
+                    user_name: USER_NAME,
+                    email: "",
+                    ip_address: ip_address,
+                    user_type: "<%= userType %>",
+                    meeting_host: <%if (userType === 'researcher') { %> true <%} else { %> false <% } %> })
+                }).then((response) => {
+                return response.json();
+            }).then((data) => {
+                //Create a meetinglog
+                fetch('/meeting_log', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({meeting_name: "<%= roomId %>",
+                              meeting_password: "<%= passWord %>",
+                              user_name: USER_NAME,
+                              email: "",
+                              ip_address: ip_address,
+                              user_type: "<%= userType %>",
+                              meeting_host: <%if (userType === 'researcher') { %> true <%} else { %> false <% } %> })
+                          }).then((response) => {
+                    return response.json();
+                }).then((data) => {console.log(data)});
+                console.log(data)
+              });
+          }
+          else{
+            //Create a meetinglog
+            fetch('/meeting_log', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({meeting_name: "<%= roomId %>",
+                          meeting_password: "<%= passWord %>",
+                          user_name: USER_NAME,
+                          email: "",
+                          ip_address: ip_address,
+                          user_type: "<%= userType %>",
+                          meeting_host: <%if (userType === 'researcher') { %> true <%} else { %> false <% } %> })
+                      }).then((response) => {
+                return response.json();
+            }).then((data) => {console.log(data)});
+          }
+      });
+
+
+
     </script>
   </head>
   <body>
@@ -70,7 +143,7 @@
     </div>
   </div>
   </body>
-  <script src="node_modules/jquery/dist/jquery.min.js"></script>
+  
   <script src="../dist/room.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
 </html>

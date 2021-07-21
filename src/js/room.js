@@ -1,5 +1,7 @@
 import css from '../css/room_style.scss';
 import io from 'socket.io-client';
+import querystring from 'querystring'
+
 const { RTCPeerConnection, RTCSessionDescription } = window;
 
 var users_in_room = [];
@@ -360,10 +362,15 @@ stopVideo.addEventListener("click", () => {
 
 if(USER_TYPE == "researcher"){
 	const inviteButton = document.querySelector("#inviteButton");
+	const inviteData = {meeting_name: ROOM_ID,
+                meeting_password: PASSWORD,
+                user_name: "",
+                user_type: "participant",
+                meeting_host: false};
 	inviteButton.addEventListener("click", (e) => {
 	  prompt(
 	    "Copy this link and send it to people you want to meet with",
-	    window.location.origin+"/room?meeting_number="+ROOM_ID
+	    window.location.origin+"/room?"+querystring.stringify(inviteData)
 	  );
 	});	
 }

@@ -6,15 +6,140 @@ const path = require('path');
 const webpackDevMiddleware = require('webpack-dev-middleware');
 const querystring = require('querystring');
 
+
 const bodyParser = require('body-parser')
 const crypto = require('crypto');
 const cors = require('cors')
 const config = require('./webpack.config.dev.js');
 
 //load database functions
-const db = require('./queries')
+var pgp = require('pg-promise')();
 
 var dotenv = require('dotenv').config({path: __dirname + '/.env'});
+const dbConfig = {
+  user: process.env.USER,
+  host: process.env.DB_URL,
+  database: process.env.DATABASE,
+  password: process.env.PASSWORD,
+  port: parseInt(process.env.DB_PORT),
+}
+const db = pgp(dbConfig)
+
+const createMeetingLog = (request, response) => {
+  const meeting_name = request.body.meeting_name;
+  const meeting_password = request.body.meeting_password;
+  const user_name = request.body.user_name;
+  const email = request.body.email;
+  const ip_address = request.body.ip_address;
+  const user_type = request.body.user_type;
+  const meeting_host = request.body.meeting_host;
+
+
+  //add user to the users table if necessary
+  db.any(`INSERT INTO users (user_name, user_ip_address, user_type, user_email)
+      SELECT $1, $2, $3, $4 WHERE NOT EXISTS
+      (SELECT * FROM users WHERE user_name = $1::VARCHAR AND user_email= $4::VARCHAR LIMIT 1)`,
+      [user_name, ip_address, user_type, email]).then((result)=>{
+      console.log(`User created with ID: ${result}`);
+    }).catch(function (error) {
+    console.log('ERROR in inserting new user in createMeetingLog:', error)
+    });
+
+  //add log data to logs table
+
+  db.one(`INSERT INTO logs (meeting_id, user_id, meeting_host, meeting_join_time, meeting_leave_time) 
+      SELECT 
+      (SELECT max(meeting_id) from meetings WHERE meeting_name = $1::VARCHAR), (SELECT user_id FROM users WHERE user_name = $5::VARCHAR AND user_email = $6::VARCHAR LIMIT 1), 
+      $2, $3, $4 RETURNING log_id;`,
+      [meeting_name, meeting_host, new Date(), null, user_name, email], log => log.log_id).then((result)=>{
+      response.status(201).send(`[${result}]`);
+    }).catch(function (error) {
+    console.log('ERROR in inserting new log in createMeetingLog:', error)
+    });
+}
+
+const deleteMeetingLog = (request, response) => {
+  const meeting_name = request.params.meeting_name
+
+  db.one('DELETE FROM logs WHERE meeting_name = $1 RETURNING meeting_name;', [meeting_name], log=>log.meeting_name).then((result)=>{ 
+    response.status(200).send(`Meeting Log deleted with Meeting Number: ${result}`)}
+  );
+}
+
+const createMeeting = (request, response) => {
+    const meeting_name = request.body.meeting_name;
+    const meeting_password = request.body.meeting_password;
+    db.one('INSERT INTO meetings (meeting_name, meeting_password, meeting_ended) values (${meeting_name}, ${meeting_password}, ${meeting_ended}) RETURNING meeting_id', {
+        meeting_name: meeting_name,
+        meeting_password: meeting_password,
+        meeting_ended: false
+    }, meeting => meeting.meeting_id).then((result)=>{
+      response.status(201).send(`[${result}]`);
+    }).catch(function (error) {
+    console.log('ERROR in createMeeting:', error)
+    });
+    
+}
+
+const getUserMeetingLogs = (request, response) => {
+  const user_name = request.params.user_name
+  const meeting_name = request.params.meeting_name
+
+  db.any(`SELECT log_id, logs.meeting_id, logs.user_id, meeting_join_time, meeting_leave_time, meeting_host, user_name, meeting_name
+      FROM logs
+      LEFT JOIN users ON logs.user_id = users.user_id
+      LEFT JOIN meetings ON logs.meeting_id = meetings.meeting_id
+      WHERE user_name = $1 AND meeting_name = $2;`, [user_name, meeting_name]).then((results)=>{
+      response.status(200).json(results)
+    }).catch(function (error) {
+    console.log('ERROR in getUserMeetingLogs:', error)
+    });
+}
+
+const getActiveMeetingLogs = (request, response) => {
+  db.any("SELECT * FROM meetings WHERE meeting_ended = false").then((results)=>{
+      response.status(200).json(results)
+    }).catch(function (error) {
+    console.log('ERROR in getActiveMeetingLogs:', error)
+    });
+}
+
+const getAllMeetingLogs = (request, response) => {
+  db.any('SELECT * FROM logs WHERE meeting_host=true ORDER BY meeting_id ASC').then((results)=>{
+      response.status(200).json(results)
+    }).catch(function (error) {
+    console.log('ERROR in getAllMeetingLogs:', error)
+    });
+}
+
+const updateMeetingLog = (user_name, meeting_name) => {
+  db.any(
+    `WITH user_logs as
+    (SELECT log_id, logs.meeting_id, logs.user_id, meeting_join_time, meeting_leave_time, meeting_host, user_name, meeting_name
+        FROM logs
+        LEFT JOIN users ON logs.user_id = users.user_id
+        LEFT JOIN meetings ON logs.meeting_id = meetings.meeting_id
+        WHERE user_name = $1 AND meeting_name = $2 ORDER BY meeting_join_time DESC LIMIT 1)
+    UPDATE logs set meeting_leave_time = $3 WHERE user_id = (SELECT user_id from users where user_name = $1 limit 1)
+     AND meeting_leave_time IS NULL;`,
+    [user_name, meeting_name, new Date()]).then(
+      console.log(`User:${user_name} has left meeting: ${meeting_name}.`)
+    ).catch(function (error) {
+    console.log('ERROR in updateMeetingLog:', error)
+    });
+}
+
+const endMeeting = (meeting_name) => {
+
+  db.none('UPDATE meetings SET meeting_ended = true WHERE meeting_name = $1;',
+    [meeting_name]).then(
+      console.log(`Meeting Number: ${meeting_name} has ended.`)
+    ).catch(function (error) {
+    console.log('ERROR in endMeeting:', error)
+    });
+
+}
+
 //#endregion
 
 //#region initialize variables and config
@@ -30,8 +155,8 @@ const fileUpload = require('express-fileupload');
 const _ = require('lodash');
 
 //Intialize DB and migrations
-db.createAndMigrateDB();
-console.log("Initialized DB");
+//db.createAndMigrateDB();
+console.log("Initialized DB", db.dbConfig);
 
 //Initialize server port
 const PORT = process.env.PORT || 5000
@@ -93,14 +218,14 @@ app.get('/', function(req, res, next) {
 
 /* GET meeting room. */
 app.post("/room_create", (req, res) => {
-      console.log("Redirecting to room created with UUID: "+req.body.meeting_number);
-    res.redirect(301,'/room?'+querystring.stringify({UUID : req.body.meeting_number}));
+      console.log("Redirecting to room created with UUID: "+req.body.meeting_name);
+    res.redirect(301,'/room?'+querystring.stringify({UUID : req.body.meeting_name}));
 
 });
 
 /* GET meeting room. */
 app.get("/room", (req, res) => {
-    console.log("Rendering room with UUID: "+req.query.meeting_number);
+    console.log("Rendering room with UUID: "+req.query.meeting_name);
     let userName, userType, passWord;
     if(req.query.user_type){
       userType = req.query.user_type;
@@ -120,33 +245,38 @@ app.get("/room", (req, res) => {
     else{
       passWord = ""
     }
-    res.render("room.ejs", { roomId: req.query.meeting_number, userName: userName, userType : userType, passWord: passWord});
+    res.render("room.ejs", { roomId: req.query.meeting_name, userName: userName, userType : userType, passWord: passWord});
 });
 
 /* POST request with meeting details and response with zoom signature */
 app.post('/webrtc_sign', (req, res) => {
   const timestamp = new Date().getTime();
-  const meetingNumber = uuidv4();
+  const meetingName = uuidv4();
 
   /* Authenticate the user here and send a response. For example, if there is no meeting number then create a room with a random meeting number */
+  console.log('Sending response');
 
   res.json({
-    meetingNumber: meetingNumber,
+    meetingName: meetingName,
     user_type : req.body.user_type,
     passWord : req.body.passWord,
     userName : req.body.userName,
     userEmail : req.body.userEmail
   });
-  console.log('Sent response');
 })
 
 //#region all DB endpoints
-app.get('/meeting_logs', db.getAllMeetingLogs)
-app.get('/meeting_active_logs', db.getActiveMeetingLogs)
-app.get('/meeting_log/:user_name/:meeting_number', db.getMeetingLog)
-app.post('/meeting_log', db.createMeetingLog)
-app.delete('/meeting_log/:meeting_number', db.deleteMeetingLog)
-app.post('/meeting', db.createMeeting)
+app.get('/meeting_logs', getAllMeetingLogs)
+
+app.get('/meeting_active_logs', getActiveMeetingLogs)
+
+app.get('/meeting_log/:user_name/:meeting_name', getUserMeetingLogs)
+
+app.post('/meeting_log', createMeetingLog)
+
+app.delete('/meeting_log/:meeting_name', deleteMeetingLog)
+
+app.post('/meeting',  createMeeting);
 
 //#endregion
 
@@ -172,7 +302,7 @@ app.post('/meeting', db.createMeeting)
             if(socket_id == socket['id']){
 
               //update database meeting logs here
-              console.log(db.updateMeetingLog(users_in_room[room][socket_id],room));
+              updateMeetingLog(users_in_room[room][socket_id],room);
               var leaving_username = users_in_room[room][socket_id]
               delete users_in_room[room][socket_id]
               io.to(room).emit('room_leave_event',{'leaving_username':leaving_username,'leaving_user_id':socket_id,'message':'left room '+room, 'users_in_room':Object.values(users_in_room[room]), 'room':room});
@@ -180,7 +310,7 @@ app.post('/meeting', db.createMeeting)
 
 	// end the meeting if nobody is left
               if (Object.entries(users_in_room[room]).length === 0) {
-                console.log(db.endMeeting(room));
+                endMeeting(room);
               }
 
 		break
