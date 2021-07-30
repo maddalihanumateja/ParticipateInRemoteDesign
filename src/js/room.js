@@ -241,7 +241,6 @@ if (USER_TYPE == 'researcher') {
 let myVideoStream;
 const videoGrid = document.getElementById("video-grid");
 const myVideo = document.createElement("video");
-myVideo.muted = true;
 
 const servers = {
   	iceServers: [
@@ -257,8 +256,14 @@ navigator.mediaDevices.getUserMedia({
 })
 .then((stream) => {
     myVideoStream = stream;
-    addVideoStream(myVideo, stream, USER_NAME);
+    myVideo.srcObject = stream;
+    myVideo.muted=true;
+    myVideo.setAttribute("id", USER_NAME);
+    myVideo.addEventListener("loadedmetadata", () => {
+       myVideo.play();
+    });
     videoGrid.append(myVideo);
+
 }).then(()=>{
 	//start a socket connection. send a set_room event to the server
 	socket.emit('set_room', {'room':ROOM_ID, 'username':USER_NAME});
@@ -283,7 +288,7 @@ function call(userName, socketId) {
 
   	// Create an RTCPeerConnection via the polyfill.
   	
-  	let stream = myVideo.srcObject;
+  	let stream = myVideoStream;
   	pcLocal[socketId] = new RTCPeerConnection(servers);
   	stream.getTracks().forEach(track => pcLocal[socketId].addTrack(track, stream));
   	pcLocal[socketId].onicecandidate = event => {
