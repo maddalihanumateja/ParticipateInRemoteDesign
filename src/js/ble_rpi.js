@@ -10,6 +10,7 @@ var deviceSelectBtn = document.getElementById("device-select-btn");
 var bluetoothDevice;
 var service;
 
+const rpiInitEvent = new Event('rpiInitEvent');
 /* Functions required to encode string data to a byte stream when transmitting using BLE
 and decode bytestreams back to strings when recieving BLE data
 */
@@ -40,23 +41,53 @@ function requestDevice() {
     service = bluetoothDevice.gatt.connect().then(server => {
       return server.getPrimaryService(serviceUuid);
     });
-  }).then(result=>{
     console.log('Obtained Service...');
-    console.log('Adding read, write event triggers to buttons...');
-    document.getElementById("write-json-btn").addEventListener("click",function(){
-      var data = document.getElementById("exampleJSON").value;
-      writeCharacteristic(service, characteristicWriteUuid, data);
-    });
-    document.getElementById("print-file-btn").addEventListener("click",function(){
-      var data = "{\"function\":\"print\", \"args\":{\"filename\":\""+document.getElementById("examplePrintFile").value+"\"}}";
-      console.log(data)
-      writeCharacteristic(service, characteristicRPCUuid, data);
-    });
-    document.getElementById("read-json-btn").addEventListener("click",function(){
-      readCharacteristic(service, characteristicStatusUuid).then(value=>{
-        document.getElementById("read-ble").innerHTML = value;
+  })/*.then( result => {
+
+    console.log('Sending server url to Raspberry Pi...');
+    try{
+      sendAppServerUrl(service, characteristicRPCUuid, window.location.origin, ROOM_ID);
+    }
+    catch(error){
+      console.log("Error sending the server url to the Raspberry Pi");
+    }
+  })*/.then( result =>{
+    console.log('Initializing buttons that interact with raspberry pi');
+    initRpiBLE();
+  });
+}
+
+function initRpiBLE(){
+
+    console.log('Sending username to Raspberry Pi...');
+    try{
+      //USER_NAME should be defined in the room.ejs view. (Or new_index.ejs or wherever the video call is displayed ...)
+      sendUserName(service, characteristicRPCUuid, USER_NAME, ROOM_ID);
+    }
+    catch(error){
+      console.log("Error sending the username to the Raspberry Pi");
+    }
+
+    try{
+      console.log('Adding read, write event triggers to buttons...');
+      document.getElementById("write-json-btn").addEventListener("click",function(){
+        var data = document.getElementById("exampleJSON").value;
+        writeCharacteristic(service, characteristicWriteUuid, data);
       });
-    });
+      document.getElementById("print-file-btn").addEventListener("click",function(){
+        var data = "{\"function\":\"print\", \"args\":{\"filename\":\""+document.getElementById("examplePrintFile").value+"\"}}";
+        console.log(data)
+        writeCharacteristic(service, characteristicRPCUuid, data);
+      });
+      document.getElementById("read-json-btn").addEventListener("click",function(){
+        readCharacteristic(service, characteristicStatusUuid).then(value=>{
+          document.getElementById("read-ble").innerHTML = value;
+        });
+      });  
+    }catch(error){
+     console.log("Error adding some click functions"); 
+    }
+    
     document.getElementById("connect-wifi-btn").addEventListener("click",function(){
       console.log("Fetching the names of available WiFi networks");
       readCharacteristic(service, characteristicReadUuid).then(wifi_names=>{
@@ -72,8 +103,6 @@ function requestDevice() {
         });
       });
     });
-
-  });
 }
 
 function onDisconnected() {
@@ -120,11 +149,29 @@ function writeCharacteristic(service, characteristicUuid, data){
   })
   .catch(error => {
     console.log('Argh! ' + error);
+    console.log('Was trying to send '+ data +' to '+characteristicUuid);
   });
 }
 
-deviceSelectBtn.addEventListener("click", requestDevice);
+function sendUserName(service, characteristicRPCUuid, userName, room){
+  var data = "{\"function\":\"setUserName\", \"args\":{\"userName\":\""+userName+"\", \"room\":\""+room+"\", \"serverUrl\":\""+ window.location.origin+"\"}}";
+  console.log(data)
+  writeCharacteristic(service, characteristicRPCUuid, data);
+}
 
+function sendAppServerUrl(service, characteristicRPCUuid, serverUrl, room){
+  var data = "{\"function\":\"setAppServerUrl\", \"args\":{\"serverUrl\":\""+serverUrl+"\", \"room\":\""+room+"\"}}";
+  console.log(data)
+  writeCharacteristic(service, characteristicRPCUuid, data);
+}
+
+try{
+  deviceSelectBtn.addEventListener("click", requestDevice);
+  document.addEventListener("rpiInitEvent", initRpiBLE);
+}
+catch(error){
+  console.log('RPi selection button not present in researcher view.');
+}
 /*
 //Helper functions to recieve notifications on a characteristic that is time-varying
 // GATT server sends an event everytime the characteristic changes.

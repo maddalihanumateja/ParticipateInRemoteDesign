@@ -169,13 +169,17 @@ var connected_users = {};
 var users_in_room = {};
 
 var chat_log = {};
-var device = "";
+var devices = [];
 
 // Tell express to use the webpack-dev-middleware and use the webpack.config.js
 // configuration file as a base.
 app.use(webpackDevMiddleware(compiler, {
   publicPath: config.output.publicPath,
 }));
+
+var favicon = require('serve-favicon');
+
+app.use(favicon(__dirname + '/src/img/favicon.ico'));
 
 app.use("/node_modules", express.static(__dirname + '/node_modules'));
 
@@ -289,8 +293,40 @@ app.post('/meeting',  createMeeting);
       console.log('socket-id "'+socket['id']+'" connected');
       connected_users[socket['id']] = {};//Maybe include the list of devices this client is connected to
 
+      socket.on("toggle_participant_camera_stream_to_server", data =>{
+        io.to(data["room"]).emit("toggle_participant_camera_stream_to_participant", data);
+      });
+
       socket.on('message', data => {
-        device = data;
+        console.log("Receiving devices from RPi's socket.send event");
+        //If the participant tries to reconnect to the RPi, we need to first filter out any any devices which have already been added previously.
+        // We need to removed devices previously associated with this userName and devices associated with an existing ip address
+        devices = devices.filter( d => !(d['device']==data['device']&&d['userName']==data['userName']) && !(d['device']==data['device']&&d['ip']==data['ip']));
+
+        //Update or refresh device list now. We have removed possible duplication of devices in the previous filter step
+        devices.push(data);
+
+        if(true){
+          
+          // Checking how the devices array would look like as a dictionary with device type as the key and associated usernames as values.
+          // The client-side code also converts the devices array to a similar dictionary before displaying a list of available user's for each device type. 
+          // Input: [{'device':'camera','userName':'u1','ip':'https://adshru34293857n.ngrok.io','room':'test','socketId':'894nsidfug9rr'},{'device':'printer',...},...]
+          // Output: {'camera':['u1',...],'printer':[...],...}
+
+          var devices_dict = {};
+          for(var i=0;i<devices.length;i++){
+              if(!devices_dict[devices[i]["device"]]){
+              devices_dict[devices[i]["device"]] = [];
+              }
+              devices_dict[devices[i]["device"]].push(devices[i]["userName"])
+          }
+          console.log(devices_dict);
+        }
+          
+        io.to(data['room']).emit('devices_update', JSON.stringify(devices));
+
+          //If a camera is present in the devices, send the image stream to everyone
+
       });
 
       socket.on('disconnect', function(){
@@ -303,7 +339,8 @@ app.post('/meeting',  createMeeting);
 
               //update database meeting logs here
               updateMeetingLog(users_in_room[room][socket_id],room);
-              var leaving_username = users_in_room[room][socket_id]
+              var leaving_username = users_in_room[room][socket_id];
+              devices = devices.filter( d => d['userName']!=leaving_username);
               delete users_in_room[room][socket_id]
               io.to(room).emit('room_leave_event',{'leaving_username':leaving_username,'leaving_user_id':socket_id,'message':'left room '+room, 'users_in_room':Object.values(users_in_room[room]), 'room':room});
               
@@ -430,7 +467,7 @@ const listener = http.listen(PORT, function () {
 });
 
 app.get('/devices.txt', (req, res) => {
-  res.send(device);
+  res.send(JSON.stringify(devices));
 });
 
 // Webhook endpoint for when someone joins the meeting
