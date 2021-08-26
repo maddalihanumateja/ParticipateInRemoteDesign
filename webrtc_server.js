@@ -294,7 +294,13 @@ app.post('/meeting',  createMeeting);
       connected_users[socket['id']] = {};//Maybe include the list of devices this client is connected to
 
       socket.on("toggle_participant_camera_stream_to_server", data =>{
-        io.to(data["room"]).emit("toggle_participant_camera_stream_to_participant", data);
+        devices = devices.map(function(d){
+          if(d['userName'] == data['userName'] && data['room']==d['room'] && d['device']=='camera'){
+            // Update the list of devices to show camera was toggled for userName
+            d['enabled'] = !d['enabled'];
+          }
+        });
+        socket.to(data["room"]).emit("toggle_participant_camera_stream_to_participant", data);
       });
 
       socket.on('message', data => {
@@ -303,6 +309,9 @@ app.post('/meeting',  createMeeting);
         // We need to removed devices previously associated with this userName and devices associated with an existing ip address
         devices = devices.filter( d => !(d['device']==data['device']&&d['userName']==data['userName']) && !(d['device']==data['device']&&d['ip']==data['ip']));
 
+        if(data['device']=='camera'){
+          data['enabled']=false;  
+        }        
         //Update or refresh device list now. We have removed possible duplication of devices in the previous filter step
         devices.push(data);
 
@@ -442,14 +451,15 @@ app.post('/upload', async (req, res) => {
         } else {
             //Use the name of the input field (i.e. "avatar") to retrieve the uploaded file
             let avatar = req.files.avatar;
-
+            console.log(req.body);
             // Gets date in yyyy-mm-dd format
             let date = (new Date()).toISOString().split('T')[0];
             console.log('/uploads/' + date + '/' + avatar.name);
             //Use the mv() method to place the file in upload directory and then by date
             avatar.mv('./uploads/' + date + '/' + avatar.name);
 
-            // Emit file metadata
+            // Emit file metadata to all sockets. Only Raspberry Pis will respond to this.
+            // Use this only when every Raspberry Pi should print simultaneously
             io.sockets.emit('clientEvent', {
                 name: avatar.name,
                 mimetype: avatar.mimetype,

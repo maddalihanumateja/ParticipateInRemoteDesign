@@ -107,6 +107,20 @@ socket.on('existing_users', function(obj){
 	  console.log(obj);
 	  if(USER_TYPE == "researcher"){
 			modal_append();
+	  } else {
+	  	var devices_array = [];
+	  	$.get("/devices.txt", function(data, status){
+	  		console.log(data);
+	  		devices_array = JSON.parse(data);
+	  		devices_array.forEach(function(d){
+	  			if(d["device"] == 'camera' && d["room"] == ROOM_ID && d['enabled']){
+	  				var src = d['ip']+"/stream.mjpg"
+	  				console.log('<img id = \"'+ userName +'_rpi_camera\"' +' src='+src+' />');
+	  				var rpiCameraVideo = $('<img id = \"'+ userName +'_rpi_camera\"' +' src='+src+' />');
+	  				rpiCameraVideo.appendTo(videoGrid);
+	  			}
+	  		});
+	  	});
 	  }
 	  for(var socketId in obj){
 		call(obj[socketId], socketId);
@@ -154,7 +168,7 @@ socket.on('toggle_participant_camera_stream_to_participant', function(streamObj)
 	// we could also only create or toggle the video stream for the userName whose RPi is streaming video 
 	var userName = streamObj['userName'];
 	var src = streamObj['src'];
-	if(USER_TYPE == 'participant'){
+	if(USER_TYPE == 'participant' || USER_TYPE == 'researcher'){
 		if(document.getElementById(userName+'_rpi_camera')){
 			// If this user's camera is already streaming then toggle to show/hide
 			$("#"+userName+'_rpi_camera').toggle();
@@ -234,6 +248,36 @@ socket.on("createMessage", (message, userName) => {
 	</div>`;
 });
 
+function submit_print_form(e){
+	e.preventDefault();
+
+	let myForm = document.getElementById('printer-file-form');
+	let formData = new FormData(myForm);
+	var participantList = document.getElementById("printer-participant-list");
+	var userName = participantList.options[participantList.selectedIndex].text;
+	formData.append('userName', userName);
+	$("#printSubmit").prop("disabled", true);
+
+	$.ajax({
+	                   type: "POST",
+	                   enctype: 'multipart/form-data',
+	                   url: "/upload",
+	                   data: formData,
+	                   processData: false,
+	                   contentType: false,
+	                   cache: false,
+	                   timeout: 800000,
+	                   success: function (data) {
+	                       console.log("SUCCESS : ", data);
+	                       $("#printSubmit").prop("disabled", false);
+	                   },
+	                   error: function (e) {
+	                       console.log("ERROR : ", e);
+	                       $("#printSubmit").prop("disabled", false);
+	                   }
+	               });
+}
+
 function modal_append() {
 
 	var devices_array = [];
@@ -244,14 +288,14 @@ function modal_append() {
 			if(!devices[devices_array[i]["device"]]){
 				devices[devices_array[i]["device"]] = [];
 			}
-			devices[devices_array[i]["device"]].push({"userName":devices_array[i]["userName"], "ip":devices_array[i]["ip"]})
+			devices[devices_array[i]["device"]].push({"userName":devices_array[i]["userName"], "ip":devices_array[i]["ip"], "enabled": devices_array[i]["enabled"]})
 		}
 	});
 
 	let modal = document.getElementById("modal-content");
 	let modalsText2;
 	
-	if(devices_array.length == 0){
+	if(Object.keys(devices).length == 0){
 		modal.innerHTML = '<span>No devices found.</span>';
 	}
 	else{
@@ -259,9 +303,11 @@ function modal_append() {
 	}
 
 	if ("printer" in devices) {
-		let modalsText2 = $('<div><i class="fa fa-print" style = \'max-height:70px;float:left\'></i><span style =\'font-size:50px;padding-left:2%;\'>Printer</span><br><br><label for=\'participants\'>Choose a participant:</label><br><select name=\'participants\' id=\'printer-participant-list\' class=\'participant-list\'></select><br><br><p>Upload a file:<form method=\'post\' action=\'upload\' enctype=\'multipart/form-data\'><input type=\'file\' name=\'avatar\'><input type=\'submit\'></form></p></div>');
+		let modalsText2 = $('<div><i class="fa fa-print" style = \'max-height:70px;float:left\'></i><span style =\'font-size:50px;padding-left:2%;\'>Printer</span><br><br><label for=\'participants\'>Choose a participant:</label><br><select name=\'participants\' id=\'printer-participant-list\' class=\'participant-list\'></select><br><br><p>Upload a file:<form method=\'post\' id=\'printer-file-form\' enctype=\'multipart/form-data\'><input type=\'file\' name=\'avatar\'><input id=\'printSubmit\' type=\'submit\'></form></p></div>');
 		$(modalsText2).appendTo(modal);
+		$("#printSubmit").click(submit_print_form);
 		var content = document.getElementById("printer-participant-list");
+
 		for(var i=0; i<devices["printer"].length;i++){
 			let nameElement = $('<option value=\'' + devices["printer"][i]["userName"] + '\'>' + devices["printer"][i]["userName"] + '</option>');
 			$(nameElement).appendTo(content);
@@ -269,7 +315,7 @@ function modal_append() {
 	}
 
 	if ("projector" in devices) {
-		let modalsText2 = $('<div><img src =\'https://cdn1.iconfinder.com/data/icons/healthcare-medical-line/32/healthcare_health_medical_presentation_projection_projector_device-512.png\' style = \'max-height:70px;float:left\' /><span style = \'font-size:50px;padding-left:2%;\'>Projector</span> </div><br><label for=\'participants\'>Choose a participant:</label><br><select name=\'participants\' id=\'projector-participant-list\' class=\'participant-list\'></select><br><br></div>');
+		let modalsText2 = $('<div><img src =\'https://cdn1.iconfinder.com/data/icons/healthcare-medical-line/32/healthcare_health_medical_presentation_projection_projector_device-512.png\' style = \'max-height:70px;float:left\' /><span style = \'font-size:50px;padding-left:2%;\'>Projector</span> </div><br><label for=\'participants\'>Choose a participant:</label><br><select name=\'participants\' id=\'projector-participant-list\' class=\'participant-list\'></select><br><br><p>Upload a file:<form method=\'post\' id=\'projector-file-form\' action=\'upload\' enctype=\'multipart/form-data\'><input type=\'file\' name=\'avatar\'><input type=\'submit\'></form></p></div>');
 		$(modalsText2).appendTo(modal);
 		var content = document.getElementById("projector-participant-list");
 		for(var i=0; i<devices["projector"].length;i++){
@@ -284,13 +330,34 @@ function modal_append() {
 		$(modalsText2).appendTo(modal);
 		var content = document.getElementById("camera-participant-list");
 		for(var i=0; i<devices["camera"].length;i++){
-			let nameElement = $('<button id="'+devices["camera"][i]["userName"]+"cam_button"+'" type="button" class="btn btn-outline-primary" data-button=\'{"ip":"'+devices["camera"][i]["ip"]+'"}\'>' + devices["camera"][i]["userName"] + '</button>');
-			$(nameElement).appendTo(content);
+			if(devices["camera"][i]["enabled"] && !document.getElementById(devices["camera"][i]["userName"]+'_rpi_camera')){
+				// If the camera was enabled when the researcher joins the call and there's no stream with the same id already existing
+				let nameElement = $('<button id="'+devices["camera"][i]["userName"]+"cam_button"+'" type="button" class="btn btn-outline-primary" data-button=\'{"ip":"'+devices["camera"][i]["ip"]+'"}\'>' + "Disable RPi cam for " + devices["camera"][i]["userName"] + '</button>');
+				$(nameElement).appendTo(content);
+				var ip = devices["camera"][i]["ip"];
+				var src = ip+'/stream.mjpg';
+
+				console.log('<img id = \"'+ devices["camera"][i]["userName"]+'_rpi_camera\"' +' src='+src+' />');
+				var rpiCameraVideo = $('<img id = \"'+ devices["camera"][i]["userName"]+'_rpi_camera\"' +' src='+src+' />');
+				rpiCameraVideo.appendTo(videoGrid);
+			}
+			else{
+				let nameElement = $('<button id="'+devices["camera"][i]["userName"]+"cam_button"+'" type="button" class="btn btn-outline-primary" data-button=\'{"ip":"'+devices["camera"][i]["ip"]+'"}\'>' + "Enable RPi cam for " + devices["camera"][i]["userName"] + '</button>');				
+				$(nameElement).appendTo(content);
+			}
+			
 			$("#"+devices["camera"][i]["userName"]+"cam_button").click(function(){
 				  var ip = $.parseJSON($(this).attr('data-button'))["ip"];
 				  var src = ip+'/stream.mjpg';
 				  if(document.getElementById(devices["camera"][i]["userName"]+'_rpi_camera')){
 				  	// If this user's camera is already streaming then toggle to show/hide
+				  	// Also change the text (or image) of the button to indicate if the user can enable or disable the camera with a click
+				  	if( $("#"+devices["camera"][i]["userName"]+'_rpi_camera').html()== "Enable RPi cam for " + devices["camera"][i]["userName"]){
+				  		$("#"+devices["camera"][i]["userName"]+'_rpi_camera').html("Disable RPi cam for " + devices["camera"][i]["userName"]);
+				  	}
+				  	else{
+				  		$("#"+devices["camera"][i]["userName"]+'_rpi_camera').html("Enable RPi cam for " + devices["camera"][i]["userName"]);
+				  	}
 				  	$("#"+devices["camera"][i]["userName"]+'_rpi_camera').toggle();
 				  	// toggle on participant's side as well 
 				  }else{
@@ -503,8 +570,13 @@ showChat.addEventListener("click", () => {
 
 window.onunload = window.onbeforeunload = () => {
   socket.close();
-  pcRemote.forEach(peerConnection => peerConection.close());
-  pcLocal.forEach(peerConnection => peerConection.close());
+  for(var peerConnection in pcRemote){
+  	pcRemote[peerConection].close();
+  }
+
+  for(var peerConnection in pcLocal){
+  	pcLocal[peerConection].close();
+  }
 };
 
 
