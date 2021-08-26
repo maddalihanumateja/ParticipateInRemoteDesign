@@ -7,5 +7,4 @@ CREATE TABLE users
     user_type user_role,
     user_email character varying(100)
 );
-SET timezone = 'US/Eastern';
 `
